@@ -130,7 +130,31 @@ import java.util.TreeSet;
  * object accessor methods are never called (e.g. interpolated flames) can be 
  * initialized more quickly
  * <p>
- * Note 3: Flame implements Serializable, though this has not been tested 
+ * Note 3: The array that contains the {@link FlameView} data stores it 
+ * internally as: translationX, translationY, rotation (in radians), scale.
+ * This format is maintained internally because it is easier to conceptualize 
+ * and to interpolate in an intuitive manner. However when it retrieved via
+ * {@link #fillBuffers(int, int, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer) fillBuffers()}
+ * it is converted into an equivalent affine transformation for speed of
+ * computation. Similarly, internally transform weights are stored 
+ * independently, but is converted into a series of partial sums for speed of
+ * computation using roulette-wheel selection when it is retrieved via
+ * {@link #fillBuffers(int, int, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer) fillBuffers()}.
+ * <p>
+ * Note 4:
+ * If you want direct access to the vectorized arrays to avoid invoking, simply
+ * extend the {@code Flame} class to access its protected members. However,
+ * beware of side effects. For example, if a variation that takes parameters
+ * is present in only one of the flame's transform, and that transform is 
+ * removed. The program needs to update numTransforms, numVariations, 
+ * numParameters, xformWeights, xformCmixes, xformColors, xformAffine, 
+ * xformHasVariations, and xformParameters. To make matters worse, the pertinent
+ * data in the xformVariations and xformParameters is interleaved, so N 
+ * non-consecutive subsequences within both arrays must be removed where N is
+ * the number of transforms in the flame, then the arrays must be compacted.
+ * Off-by-one oh my...
+ * <p>
+ * Note 5: Flame implements Serializable, though this has not been tested 
  * robustly. FlameRendererOpenCL uses {@link Object#equals(Object obj)} to test 
  * VariationDefinition instances for equality. This is supposed to decrease the
  * time spent recompiling the kernel in the event that the two flames use the
@@ -140,6 +164,31 @@ import java.util.TreeSet;
  * comparator, but it would involves string compares and speed preferred over
  * serialization support. Also of note, references to objects that provide views
  * of the data (e.g. Transform) are marked as transient.
+ * <pre>Example Usage:
+ * {@code
+ * // Create a Sierpinski triangle flame object
+ * Flame flame = Flame.newSierpinski();
+ * // Print a string representation of the flame
+ * System.out.println(flame);
+ * // Get the final transform 
+ * Transform xform = flame.getTransform(0);
+ * // Set the final transform's color to red
+ * xform.getColor().set(1.0f, 0.0f, 0.0f); // red
+ * // Set the final transform's color weight to 50%
+ * xform.setColorWeight(0.5f);
+ * // Add a new transform (default's to an idenity transform)
+ * xform = flame.addTransform();
+ * // Set the new transform's weight 
+ * xform.setWeight(0.5f);
+ * // Print a string representation of the modified flame
+ * System.out.println(flame);
+ * // Create a second flame
+ * Flame flame2 = Flame.newSierpinski();
+ * // Create a flame half way between the first flame and the second
+ * Flame flame3 = Flame.lerp(flame, flame2, 0.5f, null);
+ * // Print a string representation of the interpolated flame
+ * System.out.println(flame3);
+ * }</pre>
  * 
  * @see FlameBackground
  * @see FlameColoration
@@ -417,7 +466,7 @@ public class Flame implements Serializable {
             xformParameters = Arrays.copyOf(xformParameters, numTransforms*numParameters);
         // Get a refrence to the xform object
         Transform xform = transforms[index];
-        // Fill the transformw ith default values
+        // Fill the transforms with default values
         xformWeight[index] = (index == 0)? 0.0f : 1.0f;
         xformCmixes[index] = 0.5f;
         xformColors[index*4+0] = 1.0f;
@@ -741,18 +790,18 @@ public class Flame implements Serializable {
     
     /** 
      * Constructs and returns a new {@code Flame} object using the given
-     * parameters by invoking {@link #newRandomFlame(int, int, int, int, float, float, float, float, float, float, float, float, float, float, boolean, boolean, boolean, java.util.List) newRandomFlame(...)}
-     * with the following parameters:
-     * {@code newRandomFlame(
-                minTransforms, maxTransforms, 
-                minVariations, maxVariations,
-                0.50f, 1.0f,
-                0.25f, 0.75f,
-                0.25f, 1.5f,
-                0.25f, 1.0f, (float)(Math.PI/4), 
-                1.0f,
-                finalTransform, pstAffines, randomParameters, 
-                variationList)}
+     * parameters. This method is equivalent to the following code:
+     * <pre>{@code
+     * newRandomFlame(
+     *    minTransforms, maxTransforms, 
+     *    minVariations, maxVariations,
+     *    0.50f, 1.0f,
+     *    0.25f, 0.75f,
+     *    0.25f, 1.5f,
+     *    0.25f, 1.0f, (float)(Math.PI/4), 
+     *    1.0f,
+     *    finalTransform, pstAffines, randomParameters, 
+     *    variationList)}</pre>
      * 
      * @param minTransforms
      * @param maxTransforms
@@ -782,29 +831,30 @@ public class Flame implements Serializable {
     }
     
     /**
-     * Constructs and returns a new randomly generated {@code Flame} object with
-     * the following properties:<br>
+     * Constructs and returns a new randomly generated {@code Flame} using 
+     * the given parameters. The generated {@code Flame} object will have the
+     * following properties:<br>
      * <ul>
      * <li>
      * The number of transforms will be in the range 
-     * {@code[ minTransforms, maxTransforms]}.
+     * {@code [minTransforms, maxTransforms]}.
      * </li>
      * <li>
      * The number of variations contained in each transform will be in the range 
-     * {@code[minVariations, maxVariations]}. The variations used will be taken
+     * {@code [minVariations, maxVariations]}. The variations used will be taken
      * from the provided list of variation definitions, (@code variationList}.
      * </li>
      * <li>
      * The weight of each transform will be in the range 
-     * {@code[minTransformWeight, maxTransformWeight]}.
+     * {@code [minTransformWeight, maxTransformWeight]}.
      * </li>
      * <li>
      * The color weight of each transform will be in the range 
-     * {@code[minColorWeight, maxColorWeight]}.
+     * {@code [minColorWeight, maxColorWeight]}.
      * </li>
      * <li>
      * The coefficient for each variation will be in the range 
-     * {@code[minCoefficient, maxCoefficient]}.
+     * {@code [minCoefficient, maxCoefficient]}.
      * </li>
      * <li>
      * If {@code finalTransform} is {@code false}, then the flame will have a 
@@ -830,7 +880,7 @@ public class Flame implements Serializable {
      * <ol>
      * <li>
      * Two 2D-vectors are generated whose lengths are in the range 
-     * {@code[minAffineScale, maxAffineScale]} and whose orientations are
+     * {@code [minAffineScale, maxAffineScale]} and whose orientations are
      * randomized except in that the minimum angle between the two vectors
      * will not be less than {@code minAffineTheata}.
      * </li>
@@ -843,11 +893,11 @@ public class Flame implements Serializable {
      * </li>
      * <li>
      * The affine's translation components, c and f, are then generated to be in
-     * the range {@code[-maxAffineTranslation, maxAffineTranslation]}.
+     * the range {@code [-maxAffineTranslation, maxAffineTranslation]}.
      * </li>
      * </ol>
      * Any combination of parameters which results in an invalid range will 
-     * generate and {@code IllegalArgumentException}.
+     * generate an {@code IllegalArgumentException}.
      * 
      * @param minTransforms
      * @param maxTransforms
