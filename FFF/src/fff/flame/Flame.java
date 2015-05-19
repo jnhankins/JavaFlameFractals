@@ -1,3 +1,27 @@
+/**
+ * FastFlameFractals (FFF)
+ * A library for rendering flame fractals asynchronously using Java and OpenCL.
+ * 
+ * Copyright (c) 2015 Jeremiah N. Hankins
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package fff.flame;
 
 import java.io.Serializable;
@@ -606,10 +630,36 @@ public class Flame implements Serializable {
         return flame;
     }
     
+    /** 
+     * Constructs and returns a new {@code Flame} object using the given
+     * parameters by invoking {@link #newRandomFlame(int, int, int, int, float, float, float, float, float, float, float, float, float, float, boolean, boolean, boolean, java.util.List) newRandomFlame(...)}
+     * with the following parameters:
+     * {@code newRandomFlame(
+                minTransforms, maxTransforms, 
+                minVariations, maxVariations,
+                0.50f, 1.0f,
+                0.25f, 0.75f,
+                0.25f, 1.5f,
+                0.25f, 1.0f, (float)(Math.PI/4), 
+                1.0f,
+                finalTransform, pstAffines, randomParameters, 
+                variationList)}
+     * 
+     * @param minTransforms
+     * @param maxTransforms
+     * @param minVariations
+     * @param maxVariations
+     * @param finalTransform
+     * @param pstAffines
+     * @param randomParameters
+     * @param variationList
+     * @return a newly constructed [@code Flame} object
+     */
     public static Flame newRandomFlame(
             int minTransforms, int maxTransforms, 
             int minVariations, int maxVariations,
-            boolean finalTransform, boolean pstAffines, boolean randomParameters) {
+            boolean finalTransform, boolean pstAffines, boolean randomParameters,
+            List<VariationDefinition> variationList) {
         return newRandomFlame(
                 minTransforms, maxTransforms, 
                 minVariations, maxVariations,
@@ -618,9 +668,98 @@ public class Flame implements Serializable {
                 0.25f, 1.5f,
                 0.25f, 1.0f, (float)(Math.PI/4), 
                 1.0f,
-                finalTransform, pstAffines, randomParameters);
+                finalTransform, pstAffines, randomParameters, 
+                variationList);
     }
     
+    /**
+     * Constructs and returns a new randomly generated {@code Flame} object with
+     * the following properties:<br>
+     * <ul>
+     * <li>
+     * The number of transforms will be in the range 
+     * {@code[ minTransforms, maxTransforms]}.
+     * </li>
+     * <li>
+     * The number of variations contained in each transform will be in the range 
+     * {@code[minVariations, maxVariations]}. The variations used will be taken
+     * from the provided list of variation definitions, (@code variationList}.
+     * </li>
+     * <li>
+     * The weight of each transform will be in the range 
+     * {@code[minTransformWeight, maxTransformWeight]}.
+     * </li>
+     * <li>
+     * The color weight of each transform will be in the range 
+     * {@code[minColorWeight, maxColorWeight]}.
+     * </li>
+     * <li>
+     * The coefficient for each variation will be in the range 
+     * {@code[minCoefficient, maxCoefficient]}.
+     * </li>
+     * <li>
+     * If {@code finalTransform} is {@code false}, then the flame will have a 
+     * final-transform equivalent to an identity transform, otherwise a
+     * final-transform will be randomly generated following the same rules as
+     * the other transforms.
+     * </li>
+     * <li>
+     * If {@code pstAffines} is {@code false}, then the flame's 
+     * post-variation affine transformations will be identity transformations, 
+     * otherwise they will be randomly generated following the same rules as the
+     * pre-variation affine transformations.
+     * </li>
+     * <li>
+     * If {@code randomParameters} is {@code false}, then any variations within
+     * the flame that are parameterized will used the default parameters, 
+     * otherwise random parameter values in the range (-1, 1) will be generated 
+     * for all parameterized variations.
+     * </li>
+     * </ul>
+     * Furthermore, affine transformations will be generated using the following
+     * steps:
+     * <ol>
+     * <li>
+     * Two 2D-vectors are generated whose lengths are in the range 
+     * {@code[minAffineScale, maxAffineScale]} and whose orientations are
+     * randomized except in that the minimum angle between the two vectors
+     * will not be less than {@code minAffineTheata}.
+     * </li>
+     * <li>
+     * The x and y components of the first vector are used as the affine's a and
+     * d components which control the scale and skew of the affine's x-output.
+     * The x and y components of the second vector are used as the affine's b 
+     * and e components which control the scale and skew of the affine's 
+     * y-output.
+     * </li>
+     * <li>
+     * The affine's translation components, c and f, are then generated to be in
+     * the range {@code[-maxAffineTranslation, maxAffineTranslation]}.
+     * </li>
+     * </ol>
+     * Any combination of parameters which results in an invalid range will 
+     * generate and {@code IllegalArgumentException}.
+     * 
+     * @param minTransforms
+     * @param maxTransforms
+     * @param minVariations
+     * @param maxVariations
+     * @param minTransformWeight
+     * @param maxTransformWeight
+     * @param minColorWeight
+     * @param maxColorWeight
+     * @param minCoefficient
+     * @param maxCoefficient
+     * @param minAffineScale
+     * @param maxAffineScale
+     * @param minAffineTheata
+     * @param maxAffineTranslation
+     * @param finalTransform
+     * @param pstAffines
+     * @param randomParameters
+     * @param variationList
+     * @return a newly constructed [@code Flame} object
+     */
     public static Flame newRandomFlame(
             int minTransforms, int maxTransforms, 
             int minVariations, int maxVariations, 
@@ -629,12 +768,29 @@ public class Flame implements Serializable {
             float minCoefficient, float maxCoefficient,
             float minAffineScale, float maxAffineScale, float minAffineTheata, 
             float maxAffineTranslation, 
-            boolean finalTransform, boolean pstAffines, boolean randomParameters) {
+            boolean finalTransform, boolean pstAffines, boolean randomParameters,
+            List<VariationDefinition> variationList) {
+        if (!(minTransforms >= 0 && minTransforms <= maxTransforms))
+            throw new IllegalArgumentException("!(minTransforms >= 0 && minTransforms <= maxTransforms): minTransforms="+minTransforms+" minTransforms="+maxTransforms);
+        if (!(minVariations > 0 && minVariations <= maxVariations))
+            throw new IllegalArgumentException("!(minVariations > 0 && minVariations <= maxVariations): minVariations="+minVariations+" maxVariations="+maxVariations);
+        if (!(minTransformWeight > 0 && minTransformWeight <= maxTransformWeight))
+            throw new IllegalArgumentException("!(minTransformWeight > 0 && minTransformWeight <= maxTransformWeight): minTransformWeight="+minTransformWeight+" maxTransformWeight="+maxTransformWeight);
+        if (!(minColorWeight >= 0 && minColorWeight <= maxColorWeight))
+            throw new IllegalArgumentException("!(minColorWeight >= 0 && minColorWeight <= maxColorWeight): minColorWeight="+minColorWeight+" maxColorWeight="+maxColorWeight);
+        if (!(minCoefficient > 0 && minCoefficient <= maxCoefficient))
+            throw new IllegalArgumentException("!(minCoefficient > 0 && minCoefficient <= maxCoefficient): minCoefficient="+minCoefficient+" maxCoefficient="+maxCoefficient);
+        if (!(minAffineScale >= 0 && minAffineScale <= maxAffineScale))
+            throw new IllegalArgumentException("!(minAffineScale >= 0 && minAffineScale <= maxAffineScale): minAffineScale="+minAffineScale+" maxAffineScale="+maxAffineScale);
+        if (!(Float.isFinite(minAffineTheata)))
+            throw new IllegalArgumentException("!(Float.isFinite(minAffineTheata)): minAffineTheata="+minAffineTheata);
+        if (!(Float.isFinite(maxAffineTranslation)))
+            throw new IllegalArgumentException("!(Float.isFinite(maxAffineTranslation)): maxAffineTranslation="+maxAffineTranslation);
+        if (maxVariations > 0 && (variationList == null || variationList.size() < maxVariations))
+            throw new IllegalArgumentException("maxVariations > 0 && (variationList == null || variationList.size() < maxVariations): variationList="+variationList+" maxVariations="+maxVariations);
         
-        // Get a random number generator
+        // Create a random number generator
         Random random = new Random();
-        // Get the list of default variations
-        List<VariationDefinition> variationList = new ArrayList(VariationDefinition.DEFAULT_MAP.values());
         
         // Make sure the min and max number of variations is reasonable
         minVariations = Math.min(minVariations, variationList.size());
@@ -702,7 +858,7 @@ public class Flame implements Serializable {
                 VariationInstance instance = xform.addVariation(definition);
                 // Determine the variation's coefficient
                 instance.setCoefficient(random.nextFloat()*(maxCoefficient-minCoefficient) + minCoefficient);
-                // Randomise the parameters
+                // Randomize the parameters
                 if (randomParameters) {
                     for (Map.Entry<String,Float> param : instance.getParameterMap().entrySet()) {
                         float value = random.nextFloat()*1.8f - 0.9f;
@@ -728,7 +884,7 @@ public class Flame implements Serializable {
     }
     
     /**
-     * Interpolates between the first flame, a, and the second flame, b, by
+     * Interpolates between the first flame, and the second flame, b, by
      * the amount specified by mix. The results will be stored in the third
      * given flame, unless the given reference is null, in which case a new
      * flame object will be constructed to store the results. The returned 
@@ -933,10 +1089,27 @@ public class Flame implements Serializable {
         // Return the Flame
         return out;
     }
+    
+    /** 
+     * Returns the result of linear interpolation between the first two
+     * parameter, {@code a} and {@code b}, by an amount specified by the third 
+     * parameter, {@code mix}, using the following equation: 
+     * {@code a+(b-a)*mix}.
+     * 
+     * @param a the first number
+     * @param b the second number
+     * @param mix the amount to mix the first and second number
+     * 
+     * @return the interpolated result
+     */
     private static float lerp(float a, float b, float mix) {
         return a+(b-a)*mix;
     }
     
+    /**
+     * Prints the contents of the arrays containing the information backing this
+     * {@code Flame}.  Used for debugging.
+     */
     public void printState() {
         System.out.println("numTransforms:     "+numTransforms);
         System.out.println("numVariations:     "+numVariations);
@@ -953,5 +1126,4 @@ public class Flame implements Serializable {
         System.out.println("flameBackground:   "+Arrays.toString(flameBackground));
         System.out.println("variationSet:      "+Arrays.toString(variationSet.toArray()));
     }
-    
 }
