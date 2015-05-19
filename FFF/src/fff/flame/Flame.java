@@ -142,28 +142,29 @@ import java.util.TreeSet;
  * {@link #fillBuffers(int, int, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer) fillBuffers()}.
  * <p>
  * Note 4:
- * If you want direct access to the vectorized arrays to avoid invoking, simply
- * extend the {@code Flame} class to access its protected members. However,
- * beware of side effects. For example, if a variation that takes parameters
- * is present in only one of the flame's transform, and that transform is 
- * removed. The program needs to update numTransforms, numVariations, 
- * numParameters, xformWeights, xformCmixes, xformColors, xformAffine, 
- * xformHasVariations, and xformParameters. To make matters worse, the pertinent
- * data in the xformVariations and xformParameters is interleaved, so N 
- * non-consecutive subsequences within both arrays must be removed where N is
- * the number of transforms in the flame, then the arrays must be compacted.
+ * If you want direct access to the vectorized arrays to avoid invoking
+ * {@link #fillBuffers(int, int, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer, java.nio.FloatBuffer) fillBuffers()},
+ * then you only need to extend the {@code Flame} class to access its protected
+ * members. However, beware of side effects. For example, if a variation that
+ * takes parameters is present in only one of the flame's transform, and that
+ * transform is removed. The program needs to update numTransforms,
+ * numVariations, numParameters, xformWeights, xformCmixes, xformColors,
+ * xformAffine, xformHasVariations, and xformParameters. To make matters worse,
+ * the pertinent data in the xformVariations and xformParameters is interleaved,
+ * so N non-consecutive subsequences within both arrays must be removed where N
+ * is the number of transforms in the flame, then the arrays must be compacted.
  * Off-by-one oh my...
  * <p>
- * Note 5: Flame implements Serializable, though this has not been tested 
- * robustly. FlameRendererOpenCL uses {@link Object#equals(Object obj)} to test 
+ * Note 5: Flame implements Serializable, though this has not been tested
+ * robustly. FlameRendererOpenCL uses {@link Object#equals(Object obj)} to test
  * VariationDefinition instances for equality. This is supposed to decrease the
  * time spent recompiling the kernel in the event that the two flames use the
- * same set of variations. I think that if Flames are deserialized independently
- * that the VariationDefinition instances they contain will fail the 
- * {@code equals()} test, though the data they contain will be identical. I could write a 
- * comparator, but it would involves string compares and speed preferred over
- * serialization support. Also of note, references to objects that provide views
- * of the data (e.g. Transform) are marked as transient.
+ * same set of variations. I <i>think</i> that if Flames are deserialized
+ * independently that the VariationDefinition instances they contain will fail
+ * the {@code equals()} test, though the data they contain will be identical. I
+ * could write a Comparator, but it would involves string compares and speed
+ * preferred over serialization support. Also of note, references to objects
+ * that provide views of the data (e.g. Transform) are marked as transient.
  * <pre>Example Usage:
  * {@code
  * // Create a Sierpinski triangle flame object
