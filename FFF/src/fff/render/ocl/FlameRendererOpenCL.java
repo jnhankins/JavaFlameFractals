@@ -258,6 +258,28 @@ public class FlameRendererOpenCL extends FlameRenderer {
     public String getDeviceName() {
         return getDeviceString(device, CL_DEVICE_NAME);
     }
+    
+    /**
+     * Returns the maximum clock frequency for the OpenCL device being used by
+     * this {@code FlameRendererOpenCL} object.
+     *
+     * @return the maximum clock frequency for the OpenCL device being used by
+     * this {@code FlameRendererOpenCL} object.
+     */
+    public int getDeviceMaxClockFrequency() {
+        return getDeviceInt(device, CL_DEVICE_MAX_CLOCK_FREQUENCY);
+    }
+    
+    /** 
+     * Returns the maximum number of avaiable compute units for the OpenCL
+     * device being used by this {@code FlameRendererOpenCL} object.
+     * 
+     * @return the maximum number of avaiable compute units for the OpenCL
+     * device being used by this {@code FlameRendererOpenCL} object.
+     */
+    public int getDeviceMaxComputeUnits() {
+        return getDeviceInt(device, CL_DEVICE_MAX_COMPUTE_UNITS);
+    }
 
     @Override
     public void setUpdateRate(double rate) {
@@ -274,10 +296,13 @@ public class FlameRendererOpenCL extends FlameRenderer {
         StringBuilder str = new StringBuilder();
         str.append("Flame Renderer\n");
         str.append("  Type: OpenCL\n");
-        str.append("  CL_PLATFORM_INDEX: ").append(platformIndex).append('\n');
-        str.append("  CL_PLATFORM_NAME:  ").append(getPlatformName()).append('\n');
-        str.append("  CL_DEVICE_INDEX:   ").append(platformIndex).append('\n');
-        str.append("  CL_DEVICE_NAME:    ").append(getDeviceName()).append('\n');
+        str.append("  CL_PLATFORM_INDEX:   ").append(platformIndex).append('\n');
+        str.append("  CL_PLATFORM_NAME:    ").append(getPlatformName()).append('\n');
+        str.append("  CL_PLATFORM_VERSION: ").append(getPlatformString(platform, CL_PLATFORM_VERSION)).append('\n');
+        str.append("  CL_DEVICE_INDEX:     ").append(platformIndex).append('\n');
+        str.append("  CL_DEVICE_NAME:      ").append(getDeviceName()).append('\n');
+        str.append("  CL_DEVICE_MAX_CLOCK_FREQUENCY: ").append(getDeviceMaxClockFrequency()).append('\n');
+        str.append("  CL_DEVICE_MAX_COMPUTE_UNITS:   ").append(getDeviceMaxComputeUnits()).append('\n');
         return str.toString();
     }
     
@@ -852,8 +877,8 @@ public class FlameRendererOpenCL extends FlameRenderer {
         clEnqueueUnmapMemObject(queue, xformVariationsMem, xformVariationsBuffer, 0, null, null);
         clEnqueueUnmapMemObject(queue, xformParametersMem, xformParametersBuffer, 0, null, null);
         clEnqueueUnmapMemObject(queue, flameViewAffineMem, flameViewAffineBuffer, 0, null, null);
-//        clEnqueueUnmapMemObject(queue, flameColorationMem, flameColorationBuffer, 0, null, null);
-//        clEnqueueUnmapMemObject(queue, flameBackgroundMem, flameBackgroundBuffer, 0, null, null);
+        clEnqueueUnmapMemObject(queue, flameColorationMem, flameColorationBuffer, 0, null, null);
+        clEnqueueUnmapMemObject(queue, flameBackgroundMem, flameBackgroundBuffer, 0, null, null);
     }
     /* FOR DEBUGGING
     private void print(String name, int size, FloatBuffer buffer) {
