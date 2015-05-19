@@ -41,9 +41,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * {@code Flame} maintains private vectorized arrays of data that describe a 
- * flame fractal and provides publics accessor methods for manipulating that 
- * private data from inn object oriented perspective.
+ * {@code Flame} maintains protected vectorized arrays of data that describe a 
+ * flame fractal and provides public accessor methods for manipulating the data
+ * contained in those arrays from an object oriented perspective.
  * <p>
  * For basic information about flame fractals see 
  * <a href=https://en.wikipedia.org/wiki/Fractal_flame>https://en.wikipedia.org/wiki/Fractal_flame</a>.
@@ -126,7 +126,9 @@ import java.util.TreeSet;
  * shrink, and, when they grow, they only grow to the minimum length required.
  * <p>
  * Note 2: The object that provide views of a flame's data (e.g. Transform or
- * FlameColoration) use lazy initialization.
+ * FlameColoration) use lazy initialization. This is done so that flames whose
+ * object accessor methods are never called (e.g. interpolated flames) can be 
+ * initialized more quickly
  * <p>
  * Note 3: Flame implements Serializable, though this has not been tested 
  * robustly. FlameRendererOpenCL uses {@link Object#equals(Object obj)} to test 
