@@ -32,11 +32,27 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Class {@code VariationInstance} provides accessors methods to one of a
- * {@link Transform}'s variation parameters: a scalar coefficient and parameter
- * values. Each {@code VariationInstance} is associated with a 
- * {@link VariationDefinition} and represents an instance of that variation
- * definition.
+ * Class {@code VariationInstance} provides methods to access and modify 
+ * the parameters of a variation function contained in a {@link Transform}.
+ * <p>
+ * Variation functions are split into two classes: {@code VariationDefinition}
+ * and {@code VariationInstance}. A {@code VariationDefinition} defines the
+ * algorithms that implement the variation's function, while a
+ * {@code VariationInstance} contains a reference to a
+ * {@code VariationDefinition} and can contains parameters used by the variation
+ * function.
+ * <p>
+ * Specifically, {@code VaraitionInstances} contain a reference to the 
+ * {@link #getDefinition() definition} of the variation, a scalar 
+ * {@link #setCoefficient(float)coefficient} which scales the output of
+ * the variation function, and the values of additional
+ * {@link #setParameter(java.lang.String, float) parameters} that the variation
+ * function takes as arguments. The names and default values of the parameters
+ * for a given {@code VariationInstance} can be found by consulting the 
+ * {@code VariationDefinition} ({@link VariationDefinition#getParameters()}).
+ * 
+ * @see Transform
+ * @see VariationDefinition
  *
  * @author Jeremiah N. Hankins
  */
@@ -86,7 +102,8 @@ public class VariationInstance {
     }
     
     /**
-     * Sets all of the parameters to their default values.
+     * Sets all of the parameters to their default values as specified by the
+     * {@link #getDefinition() variation definition}.
      * 
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      */

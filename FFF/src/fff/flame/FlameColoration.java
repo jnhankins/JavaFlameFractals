@@ -26,11 +26,15 @@
 package fff.flame;
 
 /**
- * Class {@code FlameColoration} provides accessors methods to a {@link Flame}'s
- * coloration parameters: {@code brightness}, {@code gamma}, and
- * {@code vibrancy}. These parameters affect the appearance of colors of the
- * flame.
- *
+ * Class {@code FlameColoration} provides methods to access and modify the
+ * coloration parameters of a {@link Flame}. Coloration parameters influence the
+ * way that colors appear in the final image. The available coloration
+ * parameters are:
+ * {@link #setBrightness(float) brightness}, {@link #setGamma(float) gamma}, and
+ * {@link #setVibrancy(float)}.
+ * 
+ * @see Flame#getColoration()
+ * 
  * @author Jeremiah N. Hankins
  */
 public class FlameColoration {
@@ -57,7 +61,7 @@ public class FlameColoration {
     }
     
     /**
-     * Sets the linear brightness scale.
+     * Sets the linear brightness (luminance) scaler. 
      * 
      * @param brightness the brightness
      * @throws IllegalArgumentException if {@code brightness} is not in range (0,inf)
@@ -69,7 +73,8 @@ public class FlameColoration {
     }
     
     /**
-     * Sets the gamma color correction value.
+     * Sets the <a href="https://en.wikipedia.org/wiki/Gamma_correction">gamma
+     * color correction (wiki)</a> value.
      * 
      * @param gamma the gamma
      * @throws IllegalArgumentException if {@code gamma} is not in range (0,inf)
@@ -83,7 +88,7 @@ public class FlameColoration {
     /**
      * Sets the vibrancy. The vibrancy is a value between 0 and 1 that
      * determines to what extent gamma correction will be applied based on the
-     * alpha channel or applied to each color channel individually.
+     * alpha channel alone or applied to each color channel individually.
      * 
      * @param vibrancy the vibrancy
      * @throws IllegalArgumentException if {@code vibrancy} is not in range [0,1]
@@ -95,7 +100,7 @@ public class FlameColoration {
     }
     
     /**
-     * Returns the linear brightness scale.
+     * Returns the linear brightness (luminance) scaler.
      * 
      * @return the brightness
      */
@@ -104,10 +109,11 @@ public class FlameColoration {
     }
     
     /**
-     * Returns the gamma color correction value.
-     * 
+     * Returns the
+     * <a href="https://en.wikipedia.org/wiki/Gamma_correction">gamma
+     * color correction (wiki)</a> value.
+     *
      * @return gamma the gamma
-     * @see <a href="https://en.wikipedia.org/wiki/Gamma_correction">https://en.wikipedia.org/wiki/Gamma_correction</a>
      */
     public float getGamma() {
         return 1.0f/flame.flameColoration[1];

@@ -26,8 +26,13 @@
 package fff.flame;
 
 /**
- * Class {@code FlameBackground} provides accessors methods to a {@link Flame}'s 
- * background color parameters: a, r, g, and b.
+ * {@code FlameBackground} provides methods to access and modify a background
+ * color of a {@link Flame}. The background color is composed of four components
+ * real valued components in the range [0, 1]:
+ * {@link #setR(float) red}, {@link #setG(float) green}, {@link #setB(float) blue},
+ * and {@link #setA(float) alpha}.
+ * 
+ * @see Flame#getBackground() 
  * 
  * @author Jeremiah N. Hankins
  */
@@ -39,34 +44,22 @@ public class FlameBackground {
     }
 
     /**
-     * Sets the alpha, red, green, and blue-component values.
+     * Sets the red, green, blue, and alpha component values.
      * 
-     * @param a the alpha-component value
      * @param r the red-component value
      * @param g the green-component value
      * @param b the blue-component value
-     * @throws IllegalArgumentException if {@code a} is not in range [0,1]
+     * @param a the alpha-component value
      * @throws IllegalArgumentException if {@code r} is not in range [0,1]
      * @throws IllegalArgumentException if {@code g} is not in range [0,1]
      * @throws IllegalArgumentException if {@code b} is not in range [0,1]
+     * @throws IllegalArgumentException if {@code a} is not in range [0,1]
      */
-    public void set(float a, float r, float g, float b) {
-        setA(a);
+    public void set(float r, float g, float b, float a) {
         setR(r);
         setG(g);
         setB(b);
-    }
-    
-    /**
-     * Sets the alpha-component value.
-     * 
-     * @param a the alpha-component value
-     * @throws IllegalArgumentException if {@code a} is not in range [0,1]
-     */
-    public void setA(float a) {
-        if (!(0<=a && a<=1))
-            throw new IllegalArgumentException("a is not in range [0,1]: "+a);
-        flame.flameBackground[0] = a;
+        setA(a);
     }
     
     /**
@@ -104,14 +97,17 @@ public class FlameBackground {
             throw new IllegalArgumentException("b is not in range [0,1]: "+b);
         flame.flameBackground[3] = b;
     }
-
+    
     /**
-     * Returns the alpha-component value.
+     * Sets the alpha-component value.
      * 
-     * @return the alpha-component value
+     * @param a the alpha-component value
+     * @throws IllegalArgumentException if {@code a} is not in range [0,1]
      */
-    public float getA() {
-        return flame.flameBackground[0];
+    public void setA(float a) {
+        if (!(0<=a && a<=1))
+            throw new IllegalArgumentException("a is not in range [0,1]: "+a);
+        flame.flameBackground[0] = a;
     }
 
     /**
@@ -141,8 +137,17 @@ public class FlameBackground {
         return flame.flameBackground[3];
     }
 
+    /**
+     * Returns the alpha-component value.
+     * 
+     * @return the alpha-component value
+     */
+    public float getA() {
+        return flame.flameBackground[0];
+    }
+
     @Override
     public String toString() {
-        return "Background("+getA()+", "+getR()+", "+getG()+", "+getB()+")";
+        return "Background("+getR()+", "+getG()+", "+getB()+", "+getA()+")";
     }
 }

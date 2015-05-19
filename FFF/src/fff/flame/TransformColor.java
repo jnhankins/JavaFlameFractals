@@ -26,9 +26,18 @@
 package fff.flame;
 
 /**
- * Class {@code TransformColor} provides accessor methods to the color parameters of a
- * {@link Transform}: a, r, g, and b.
+ * Class {@code TransformColor} provides methods to access and modify the color 
+ * parameters of a {@link Transform}. The color {@code Transform} is composed
+ * of three components: {@link #setR(float) red}, {@link #setG(float) green}, 
+ * and {@link #setB(float) blue}.
+ * <p>
+ * The weight of the transforms color is stored separately. Use
+ * {@link Transform#getColorWeight()} and
+ * {@link Transform#setColorWeight(float)} to access and modify the color's
+ * weight.
  *
+ * @see Transform#getColor()
+ * 
  * @author Jeremiah N. Hankins
  */
 public class TransformColor {

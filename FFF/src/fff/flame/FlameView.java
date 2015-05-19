@@ -26,12 +26,14 @@
 package fff.flame;
 
 /** 
- * Class {@code FlameView} provides accessors methods to a {@link Flame}'s view
- * parameters: {@code translationX}, {@code translationY}, {@code rotation}, and
- * {@code scale}. These parameters generate an affine transformation which maps
- * coordinates from the Flame Fractal Algorithm render-plane to the output image
- * plane. This allows the fractal to be translated, rotated, and scaled (in that
- * order).
+ * Class {@code FlameView} provides methods to access and modify the view 
+ * parameters of a {@link Flame}. The view parameters generate an affine
+ * transformation which map coordinates from the Flame Fractal Algorithm
+ * render-plane to the output image plane. This allows the fractal's image to be
+ * {@link #setTranslation(float, float) translated}, {@link #setRotation(float) rotated},
+ * and {@link #setScale(float) scaled} (in that order).
+ * 
+ * @see Flame#getView() 
  *
  * @author Jeremiah N. Hankins
  */
@@ -48,7 +50,7 @@ public class FlameView {
      *
      * @param translationX the x-coordinate translation
      * @param translationY the y-coordinate translation
-     * @param rotation the rotation
+     * @param rotation the rotation (in degrees clockwise)
      * @param scale the scale
      * @throws IllegalArgumentException if {@code translationX} is not in range (inf,inf)
      * @throws IllegalArgumentException if {@code translationY} is not in range (inf,inf)
@@ -60,6 +62,19 @@ public class FlameView {
         setTranslationY(translationY);
         setRotation(rotation);
         setScale(scale);
+    }
+    
+    /**
+     * Sets the amount the coordinates will be translated.
+     * 
+     * @param translationX the x-coordinate translation
+     * @param translationY the y-coordinate translation
+     * @throws IllegalArgumentException if {@code translationX} is not in range (inf,inf)
+     * @throws IllegalArgumentException if {@code translationY} is not in range (inf,inf)
+     */
+    public void setTranslation(float translationX, float translationY) {
+        setTranslationX(translationX);
+        setTranslationY(translationY);
     }
     
     /**
@@ -90,7 +105,7 @@ public class FlameView {
      * Sets the amount the coordinates will be rotated in degrees clockwise.
      * The given value will be modulated into range [0,360).
      *
-     * @param rotation the rotation
+     * @param rotation the rotation (in degrees clockwise)
      * @throws IllegalArgumentException if {@code rotation} is not in range (inf,inf)
      */
     public void setRotation(float rotation) {
@@ -133,7 +148,7 @@ public class FlameView {
      * Returns the amount that the coordinates will be rotated in degrees 
      * clockwise.
      * 
-     * @return the rotation
+     * @return the rotation (in degrees clockwise)
      */
     public float getRotation() {
         return flame.flameViewAffine[2];

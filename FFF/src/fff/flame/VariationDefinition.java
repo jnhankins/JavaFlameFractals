@@ -36,18 +36,45 @@ import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileObject;
 
 /**
- * Class {@code VariationDefinition} represents a a non-linear 2D transformation
- * called a variation. The variation is composed of source code that defines the
- * transformation function, a set of named parameters used by the transformation
- * function, and the default values of the parameters. The transformation
- * function takes a 2D point, optionally, various parameters as input and
- * outputs a new 2D point.
- * <br>
- * The variation source code string is intended to be used in both Java and
- * OpenCL programs.
- * <br>
- * An effort should be made to ensure that all VariationDefinition's have unique
- * String names, though this is not a strict requirement.
+ * Class {@code VariationDefinition} represents a a non-linear transformation
+ * function called a variation. 
+ * <p>
+ * Variation functions are split into two classes: {@code VariationDefinition}
+ * and {@code VariationInstance}. A {@code VariationDefinition} defines the
+ * algorithms that implement the variation's function, while a
+ * {@code VariationInstance} contains a reference to a
+ * {@code VariationDefinition} and can contains parameters used by the variation
+ * function.
+ * <p>
+ * To non-statically store the algorithm that implements the a non-linear 
+ * variation function, {@code VariationDefinition} store the raw OpenCL/Java 
+ * source code for the function as a {@code String}. The code can then be 
+ * incorporated into a dynamically generated Java class which can be compiled, 
+ * loaded, and instantiated at runtime (see {@link DynamicJavaCompiler}), or the
+ * incorporated directly into an OpenCL kernel and compiled just in time. The
+ * benefits are two-fold: Users can create and edit new variations at runtime.
+ * Code can be optimized so that the minimum number of variations are 
+ * incorporated into the rendering kernel (this reduces function selection 
+ * time which is traditionally performed by either an if-else cascade or a 
+ * switch).
+ * <p>
+ * Variations are intended to be non-linear, since if one wanted to include a
+ * linear transform as a variation it is more computationally efficient to
+ * incorporate the desired linear transformation into either the pre-affine or 
+ * post-affine transformation (affine transformations are a superset of linear  
+ * transformations and can be efficiently composited). However, the identity 
+ * transformation is a linear transformation which is traditionally used as a 
+ * variation in flame fractals and given the name "Linear".
+ * <p>
+ * All {@code VariationDefinition} instances should be given unique
+ * {@code String} names. Though not a strict requirement, allowing
+ * {@code VarationDefinition} instances to share a common name may cause errors.
+ * For instance, if a {@code Flame} contains two distinct
+ * {@code VariationDefinition} objects that have the same name, errors will
+ * occur.
+ * 
+ * @see Transform
+ * @see VariationInstance
  * 
  * @author Jeremiah N. Hankins
  */
@@ -203,6 +230,7 @@ public class VariationDefinition implements Comparable<VariationDefinition>, Ser
         return parameters;
     }
 
+    // Used by the TreeSet in Flame
     @Override
     public int compareTo(VariationDefinition v) {
         if (v == null)

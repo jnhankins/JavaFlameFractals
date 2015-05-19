@@ -28,16 +28,20 @@ package fff.flame;
 import fff.util.Point2D;
 
 /**
- * Class {@code TransformAffine} provides accessors methods to the affine 
- * parameters of a {@link Transform}. These parameters are six real values 
- * lettered a through f and represent a linear two-dimensional affine 
- * transformation.
+ * Class {@code TransformAffine} provides methods to access and modify the 
+ * {@link Transform#getPreAffine() pre-affine} and
+ * {@link Transform#getPstAffine() post-affine} components of a
+ * {@link Transform}. Each {@code TransformAffine} is composed of six real
+ * valued parameters lettered a through f and represent a linear two-dimensional
+ * <a href="https://en.wikipedia.org/wiki/Affine_transformation">affine
+ * transformation (wiki)</a>.
  * <br>
- * TransformAffine transformation pseudocode: 
- * <code>
+ * <pre>Affine transformation pseudocode:{@code
  *   x' = a*x + b*y + c;
- *   y' = d*x + e*y + f;
- * </code>
+ *   y' = d*x + e*y + f;}</pre>
+ * 
+ * @see Transform#getPreAffine() 
+ * @see Transform#getPstAffine() 
  * 
  * @author Jeremiah N. Hankins
  */
@@ -263,10 +267,12 @@ public class TransformAffine {
     }
     
     /**
-     * Returns {@code true} this object is still valid and its methods can be 
+     * Returns {@code true} if this object is still valid and its methods can be 
      * called without throwing an {@code IllegalStateException}.
      *
      * @return {@code true} if this {@code TransformAffine} is still valid
+     * 
+     * @see Flame
      */
     public boolean isValid() {
         return transform.isValid();

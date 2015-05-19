@@ -33,7 +33,102 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- *
+ * Class {@code Transform} provides methods to access and modify parameters
+ * contained in {@link Flame} which define transformation function. In the
+ * context of flame fractals, a transformation function is function that uses a
+ * combination of linear and nonlinear functions to map an input point-color
+ * pair to an output point-color pair.
+ * <p>
+ * The output color of a transformation is determined by mixing the input color
+ * and the {@link Transform#getColor() transform's color} by the amount 
+ * specified by the transform's {@link Transform#setColorWeight(float) colors weight}:
+ * <pre>{@code color_out = color_in + (xform_color - color_in) * xform_color_weight}</pre>
+ * The process for transforming a points is as follows:
+ * <ol>
+ * <li>
+ * Apply the first affine transformation, which is referred to as the
+ * {@link Transform#getPreAffine() pre-affine} because it is applied before the
+ * non-linear variations are applied.
+ * </li>
+ * <li>
+ * Separately apply each of the non-linear functions (referred to as
+ * {@link Transform#getVariations() variations}) to the point and sum the
+ * results.
+ * </li>
+ * <li>
+ * Apply the second affine transformation, which is referred to as the
+ * {@link Transform#getPstAffine() ppost-affine} because it is applied after the
+ * non-linear variations are applied.
+ * </li>
+ * <li>
+ * Return the results.
+ * </li>
+ * </ol>
+ * <p>
+ * Variation functions are split into two classes: {@code VariationDefinition}
+ * and {@code VariationInstance}. A {@code VariationDefinition} defines the
+ * algorithms that implement the variation's function, while a
+ * {@code VariationInstance} contains a reference to a
+ * {@code VariationDefinition} and can contains parameters used by the variation
+ * function. Internally {@code Transform} objects maintain a map from
+ * {@code VariationDefinition} keys to {@code VariationInstance} values. This
+ * ensures that each {@code VariationDefinition} contained within the
+ * {@code Transform} is unique. {@code VariationInstnace} objects are 
+ * {@link #addVariation(fff.flame.VariationDefinition) added},
+ * {@link #getVariation(fff.flame.VariationDefinition) retrieved}, and
+ * {@link #removeVariation(fff.flame.VariationDefinition) removed} using their
+ * {@code VariationDefinition} key. See {@link VariationDefinition} and
+ * {@link VariationInstance} for more information.
+ * <p>
+ * When {@code Transform} objects are instantiated they are initially identity
+ * transformations, meaning that if their function as applied to a point-color
+ * pair then that pair would remain unchanged. Specifically, the transform's 
+ * color weight is set to 0, the pre and post-affines are both identity affine
+ * mappings, and the variation set contains a the Linear (identity) variation.
+ * <p>
+ * Since a {@code Transform} cannot function properly if it contains no 
+ * variations, when the last variation is removed from a {@code Transform} a 
+ * Linear (identity) variation is automatically inserted into the 
+ * {@code Transform} so that it will not enter an illegal state. It is helpful
+ * to mindful of to avoid confusion while modifying a transform's variations.
+ * For instance, if you attempt to remove the Linear variation then add a Swirl
+ * variation, the transform will have both a Linear and s Swirl variation. To
+ * rectify the problem, first add the Swirl variation then remove the Linear
+ * variation.
+ * <p>
+ * To add a new {@code Transform} to a {@code Flame} use
+ * {@link Flame#addTransform()}. To remove a {@code Transform} from a
+ * {@code Flame} use {@link Flame#removeTransform(fff.flame.Transform)} or
+ * {@link Flame#removeTransform(int)}. {@link Flame#getTransform(int) Accessing}
+ * a specific {@code Transform} is done so by index. To find out how many
+ * {@code Transform} objects a {@code Flame} contains, use
+ * {@link Flame#getNumTransforms()}.
+ * <p>
+ * Each {@code Flame} contains a special {@code Transform} called the "final
+ * transform". The final transform is applied to every point-color pair just
+ * before it is passed through the {@link FlameView view affine} and plotted on
+ * the image. The final transform cannot be removed, and attempting to do so
+ * will result in an error. The final transform is stored at index 0 and can be
+ * accessed via {@link Flame#getTransformFinal()}.
+ * <p>
+ * Each iteration of the flame fractal algorithm (see
+ * <a href="http://flam3.com/flame.pdf">
+ * "The Fractal Flame Algorithm" by Scott Draves (pdf)</a>) requires that one of
+ * the flame's transforms is selected using random weighted selection, aka
+ * <a href="https://en.wikipedia.org/wiki/Fitness_proportionate_selection">
+ * roulette-wheel selection (wiki)</a>. The more often a transform is picked
+ * during this process the more influence it will have on the overall fractal
+ * flame image. The value that determines this is the transform's
+ * {@link #setWeight(float) weight}. The greater the transform's weight relative
+ * to the weight of the other transforms, the more likely that the transform
+ * will be picked, and the more influence it will have.
+ * 
+ * @see Flame
+ * @see TransformAffine
+ * @see TransformColor
+ * @see VariationDefinition
+ * @see VariationInstance
+ * 
  * @author Jeremiah N. Hankins
  */
 public class Transform {
@@ -335,9 +430,10 @@ public class Transform {
     
     /**
      * Applies this transformation to the given point.
+     * 
      * @param point the point to transform
-     * @param useVariations if true the variations should be applied
-     * @param usePostAffine if true the post-variations affine should be applied
+     * @param useVariations if {@code true} the variations functions will be applied
+     * @param usePostAffine if {@code true} the post-variations affine will be applied
      */
     public void apply(Point2D point, boolean useVariations, boolean usePostAffine) {
         // PreAffine

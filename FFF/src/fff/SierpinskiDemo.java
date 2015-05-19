@@ -39,9 +39,10 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 /**
- * SierpinskiDemo provides a main method which renders a Sierpinski triangle 
- * (https://en.wikipedia.org/wiki/Sierpinski_triangle) and writes the image as
- * a PNG file named "SierpinskiDemo.png".
+ * SierpinskiDemo provides a main method which renders a
+ * <a href="https://en.wikipedia.org/wiki/Sierpinski_triangle">Sierpinski
+ * triangle (wiki)</a>and writes the image as a PNG file named
+ * "SierpinskiDemo.png".
  * 
  * @author Jeremiah N. Hankins
  */

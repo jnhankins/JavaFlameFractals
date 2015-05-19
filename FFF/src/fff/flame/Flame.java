@@ -41,15 +41,15 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * {@code Flame} maintains protected vectorized arrays of data that describe a 
- * flame fractal and provides public accessor methods for manipulating the data
- * contained in those arrays from an object oriented perspective.
+ * {@code Flame} maintains protected vectorized arrays of data that describe a
+ * flame fractal and provides methods for acessing and manipulating that data
+ * from an object oriented perspective.
  * <p>
  * For basic information about flame fractals see 
  * <a href=https://en.wikipedia.org/wiki/Fractal_flame>https://en.wikipedia.org/wiki/Fractal_flame</a>.
  * For detailed information about the structure of flame fractals and the 
  * algorithm used to generate their images see <a href="http://flam3.com/flame.pdf">
- * "The Fractal Flame Algorithm" (pdf) by Scott Draves</a>
+ * "The Fractal Flame Algorithm" by Scott Draves (pdf)</a>
  * <p>
  * In brief, Flames are composed of a set of Transforms. Each Transform has a
  * weight, a weighted color, two linear affine transforms, and non-linear 
@@ -122,15 +122,18 @@ import java.util.TreeSet;
  * within the Flame is deleted. If needed, use the isValid() methods to ensure
  * the objects which provide views of the data remain valid.
  * <p>
- * Note 1: The arrays backing the vectors within the flame only grow and never
+ * Note 1: 
+ * The arrays backing the vectors within the flame only grow and never
  * shrink, and, when they grow, they only grow to the minimum length required.
  * <p>
- * Note 2: The object that provide views of a flame's data (e.g. Transform or
+ * Note 2: 
+ * The object that provide views of a flame's data (e.g. Transform or
  * FlameColoration) use lazy initialization. This is done so that flames whose
  * object accessor methods are never called (e.g. interpolated flames) can be 
  * initialized more quickly
  * <p>
- * Note 3: The array that contains the {@link FlameView} data stores it 
+ * Note 3: 
+ * The array that contains the {@link FlameView} data stores it 
  * internally as: translationX, translationY, rotation (in radians), scale.
  * This format is maintained internally because it is easier to conceptualize 
  * and to interpolate in an intuitive manner. However when it retrieved via
@@ -155,7 +158,8 @@ import java.util.TreeSet;
  * is the number of transforms in the flame, then the arrays must be compacted.
  * Off-by-one oh my...
  * <p>
- * Note 5: Flame implements Serializable, though this has not been tested
+ * Note 5: 
+ * Flame implements Serializable, though this has not been tested
  * robustly. FlameRendererOpenCL uses {@link Object#equals(Object obj)} to test
  * VariationDefinition instances for equality. This is supposed to decrease the
  * time spent recompiling the kernel in the event that the two flames use the
