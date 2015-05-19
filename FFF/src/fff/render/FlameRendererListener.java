@@ -10,7 +10,7 @@ import java.awt.image.BufferedImage;
 public interface FlameRendererListener {
     
     /**
-     * This method is called by classes {@link FlameRender} 
+     * This method is called by classes {@link fff.render.FlameRenderer FlameRenderer}. 
      * 
      * @param task
      * @param flame

@@ -2,7 +2,7 @@ package fff.flame;
 
 /**
  * Class {@code TransformColor} provides accessor methods to the color parameters of a
- * {@link FlameTransform}: a, r, g, and b.
+ * {@link Transform}: a, r, g, and b.
  *
  * @author Jeremiah N. Hankins
  */
@@ -116,7 +116,7 @@ public class TransformColor {
      * Returns {@code true} this object is still valid and its methods can be 
      * called without throwing an {@code IllegalStateException}.
      *
-     * @return {@code true} if this {@code FlameTransformAffine} is still valid
+     * @return {@code true} if this {@code TransformAffine} is still valid
      */
     public boolean isValid() {
         return transform.isValid();

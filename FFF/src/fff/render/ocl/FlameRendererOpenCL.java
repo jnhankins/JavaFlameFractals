@@ -101,7 +101,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
     private long updateInterval;
     private long preUpdateTime;
     
-    // Current flame, settings, and listners
+    // Current flame, settings, and listeners
     private FlameRendererTask task;
     private Flame flame;
     private FlameRendererSettings settings;

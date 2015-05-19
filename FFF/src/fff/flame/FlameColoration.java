@@ -82,7 +82,7 @@ public class FlameColoration {
      * Returns the gamma color correction value.
      * 
      * @return gamma the gamma
-     * @see http://en.wikipedia.org/wiki/Gamma_correction 
+     * @see <a href="https://en.wikipedia.org/wiki/Gamma_correction">https://en.wikipedia.org/wiki/Gamma_correction</a>
      */
     public float getGamma() {
         return 1.0f/flame.flameColoration[1];

@@ -3,12 +3,13 @@ package fff.flame;
 import fff.util.Point2D;
 
 /**
- * Class {@code TransformAffine} provides accessors methods to a {@link FlameTransform}'s
- * affine parameters: six real values lettered a through f. These six values
- * represent a linear two-dimensional affine transformation.
- * <br/>
- TransformAffine transformation pseudocode: 
- <code>
+ * Class {@code TransformAffine} provides accessors methods to the affine 
+ * parameters of a {@link Transform}. These parameters are six real values 
+ * lettered a through f and represent a linear two-dimensional affine 
+ * transformation.
+ * <br>
+ * TransformAffine transformation pseudocode: 
+ * <code>
  *   x' = a*x + b*y + c;
  *   y' = d*x + e*y + f;
  * </code>
@@ -224,9 +225,9 @@ public class TransformAffine {
     
 
     /**
-     * Returns a {@code String} representation of this {@code FlameTransformColor}.
+     * Returns a {@code String} representation of this {@code TransformColor}.
      * 
-     * @return a {@code String} representation of this {@code FlameTransformColor}
+     * @return a {@code String} representation of this {@code TransformColor}
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      */
     @Override

@@ -44,8 +44,8 @@ public abstract class FlameRenderer {
     
     /**
      * If this {@code FlameRenderer} is not running, the 
-     * {@link isRunning() isRunning) flag will be set, required resources will
-     * be allocated and initalized, and dependent threads will be started. If 
+     * {@link #isRunning() isRunning} flag will be set, required resources will
+     * be allocated and initialized, and dependent threads will be started. If 
      * this {@code FlameRenderer} is already running, then invoking this method 
      * does nothing.
      */
@@ -73,7 +73,7 @@ public abstract class FlameRenderer {
     
     /**
      * If this {@code FlameRenderer} is running, the 
-     * {@link isRunning() isRunning) flag will be unset, any ongoing work will
+     * {@link #isRunning() isRunning} flag will be unset, any ongoing work will
      * cease immediatly, dependent threads will be joined, and all resouces will
      * be released. 
      *
@@ -318,7 +318,7 @@ public abstract class FlameRenderer {
     
     /**
      * Allocates and initializes all resources and threads required by classes 
-     * that extend {@code FlameRenderer}. Called by {@link startRunning()}.
+     * that extend {@code FlameRenderer}. Called by {@link #startRunning()}.
      */
     protected abstract void initializeResources();
     
@@ -336,7 +336,7 @@ public abstract class FlameRenderer {
     /**
      * Renders the next image using the next {@link Flame}, 
      * {@link FlameRendererSettings}, and {@code List} of 
-     * {@link FlameRendererListner} objects provided by the specified 
+     * {@link FlameRendererListener} objects provided by the specified 
      * {@link FlameRendererTask}.
      * 
      * The {@code Flame} should be retrieved via {@link FlameRendererTask#getNextFlame() getNextFlame()},

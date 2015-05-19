@@ -17,10 +17,10 @@ import javax.tools.JavaFileObject;
  * function, and the default values of the parameters. The transformation
  * function takes a 2D point, optionally, various parameters as input and
  * outputs a new 2D point.
- * <br/>
+ * <br>
  * The variation source code string is intended to be used in both Java and
  * OpenCL programs.
- * <br/>
+ * <br>
  * An effort should be made to ensure that all VariationDefinition's have unique
  * String names, though this is not a strict requirement.
  * 
@@ -33,9 +33,9 @@ public class VariationDefinition implements Comparable<VariationDefinition>, Ser
     protected transient VariationFunction function;
     
     /**
-     * Constructs a new {@code VariationDefinition) with the given name, source
+     * Constructs a new {@code VariationDefinition} with the given name, source
      * code, and parameters. If {@code null} is provided instead of parameter 
-     * map, then the {@code VariationDefinition)'s parameter map will be empty.
+     * map, then the {@code VariationDefinition}'s parameter map will be empty.
      * 
      * @param name the name
      * @param code the source code
@@ -50,9 +50,9 @@ public class VariationDefinition implements Comparable<VariationDefinition>, Ser
     }
     
     /**
-     * Constructs a new {@code VariationDefinition) with the given name, source
+     * Constructs a new {@code VariationDefinition} with the given name, source
      * code, and parameters. If {@code null} is provided instead of parameter 
-     * map, then the {@code VariationDefinition)'s parameter map will be empty.
+     * map, then the {@code VariationDefinition}'s parameter map will be empty.
      * 
      * Because this method invokes the Java Compiler, this function optionally
      * takes a {@link DiagnosticListener} as an argument. If the argument is not
@@ -62,6 +62,7 @@ public class VariationDefinition implements Comparable<VariationDefinition>, Ser
      * @param name the name
      * @param code the source code
      * @param parameters the parameters, optionally null
+     * @param dl the compiler diagnostics listener, optionally null
      * @throws IllegalArgumentException if {@code name} is {@code null} or empty
      * @throws IllegalArgumentException if {@code code} is {@code null} or empty
      * @throws IllegalArgumentException if any of {@code parameter}'s {@code String} keys are {@code null} or empty
@@ -190,7 +191,7 @@ public class VariationDefinition implements Comparable<VariationDefinition>, Ser
      * @param point the point to transform
      * @param coefficient the variation coefficient, should be positive
      * @param parameters the parameter map - if null, default parameters will be used
-     * @param affine the affine transform - if null, an identity affine will be used
+     * @param affineArray the affine transform - if null, an identity affine will be used
      * @throws IllegalArgumentException if the affine is not null and is not length six
      * @throws IllegalArgumentException if the keys of the parameter map do not equal the keys of this variation
      */

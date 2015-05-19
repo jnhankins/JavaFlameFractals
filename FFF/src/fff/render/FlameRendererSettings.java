@@ -207,7 +207,7 @@ public class FlameRendererSettings {
      * Sets the flag that indicates whether or not the final image will use
      * density-estimation blurring.
      * 
-     * @param useBlur {@code true? if density-estimation blurring will be used
+     * @param useBlur {@code true} if density-estimation blurring will be used
      * @return this {@code FlameRendererSettings} object
      */
     public FlameRendererSettings setUseBlur(boolean useBlur) {
@@ -361,7 +361,7 @@ public class FlameRendererSettings {
      * Returns the flag that indicates whether or not the final image will use
      * density-estimation blurring.
      * 
-     * @return {@code true? if density-estimation blurring will be used
+     * @return {@code true} if density-estimation blurring will be used
      */
     public boolean getUseBlur() {
         return useBlur;

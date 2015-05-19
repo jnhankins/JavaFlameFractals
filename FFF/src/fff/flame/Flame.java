@@ -22,6 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 package fff.flame;
 
 import java.io.Serializable;
@@ -40,7 +41,113 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- *
+ * {@code Flame} maintains private vectorized arrays of data that describe a 
+ * flame fractal and provides publics accessor methods for manipulating that 
+ * private data from inn object oriented perspective.
+ * <p>
+ * For basic information about flame fractals see 
+ * <a href=https://en.wikipedia.org/wiki/Fractal_flame>https://en.wikipedia.org/wiki/Fractal_flame</a>.
+ * For detailed information about the structure of flame fractals and the 
+ * algorithm used to generate their images see <a href="http://flam3.com/flame.pdf">
+ * "The Fractal Flame Algorithm" (pdf) by Scott Draves</a>
+ * <p>
+ * In brief, Flames are composed of a set of Transforms. Each Transform has a
+ * weight, a weighted color, two linear affine transforms, and non-linear 
+ * "variation" transforms. Each flame also has a special Transform known as a 
+ * "final transform". Furthermore the Flame specifies the background color,
+ * some parameters that affect the way that colors appear the output image 
+ * ("colorization"), and also provides parameters that specify which portion
+ * of the flame image should be rendered ("view").
+ * <p>
+ * A Transform is fundamentally a function takes a color and a point as input
+ * and returns a color and a point as output. The output color is determined by
+ * mixing the Transform's color with the input color by an amount proportional
+ * to the Transform's color's weight. The output point is arrived at through the
+ * following sequence of steps: 1) Apply the the first linear affine function
+ * ("pre-affine") to the point. 2) Apply each of the Transform's non-linear
+ * functions ("variations") to the point. 3) Apply the the second linear affine
+ * function ("pst-affine") to the point. 4) Return the result. 
+ * <p>
+ * The nested structure of Fractal flames naturally lends itself to object
+ * oriented programming. It would be reasonable to create a Flame object that
+ * contains a set of Transform objects which each contain their own private data
+ * and public methods for transforming point-color pairs. This is <b>not</b>
+ * how these classes are implemented.
+ * <p>
+ * <i>All of the data needed to render a Flame is contained within vectorized 
+ * arrays in the Flame class.</i> 
+ * <p>
+ * This library was written with the the intent to utilize Java and OpenCL as a
+ * platform to generate long sequences of images to produce video. Data is most
+ * efficiently passed into OpenCL kernels in a vectorized format. Some programs
+ * that use OpenCL chose to keep their data conveniently stored in an object
+ * oriented data structure program-side and vectorize the data just before
+ * passing it into OpenCL. For a single high-resolution image where the time
+ * spent in the render kernel is much greater than the time spent vectorize the
+ * kernel's argument, the just in time vectorization approach would be fine.
+ * However, for a large volume of lower resolution images, the time spent on the
+ * vectorization process becomes non-negligible.
+ * <p>
+ * Furthermore, the primary method for generating flame fractal
+ * movies is to create two fractals, then interpolate between the two to create 
+ * a sequence of images depicting the first fractal smoothly transforming into
+ * the second. Using an OOP approach for interpolation would require traversing
+ * the tree-like data structure for both Flame objects to generate a the
+ * interpolated Flame's data tree. Pre-vectorization allows this step to be
+ * optimized into simple for-loops.
+ * <p>
+ * One potential downside of pre-vectorization is that it shifts the workload
+ * from once just before data is loaded into the kernel to every single time the
+ * flame is modified. However, modifications to the flames are generally caused
+ * by end users who are unlikely to notice the sub millisecond increase in time 
+ * spent in methods that modify the flame. On the other hand, they are likely to
+ * notice the extra percentage increase in time the library spends interpolating
+ * and vectorizing when rendering a sequence of many flames.
+ * <p>
+ * Another obvious potential downside of pre-vectorization is that all of the
+ * data is compressed into horrendously difficult to work with vectors. However,
+ * the vector arrays contained within Flame are made private. To access the data
+ * one can use Flame's accessor methods to aquire instance of objects that
+ * provide views of the Flame's data. For instance, one can aquire a 
+ * {@link Transform} object from {@link #getTransform(int)}, then aquire a
+ * {@link TransformAffine} object from {@link Transform#getPreAffine()}, etc...
+ * These objects do not contain data themselves; they merely provide views of
+ * the data contained within their parent {@code Flame}. As such, they cannot
+ * be instantiated independently. <i>The hope is that this overall strategy
+ * combines transparent pre-vectorization with the convenience of the appearance
+ * of an object oriented data structure.</i>
+ * <p>
+ * Because these objects are merely view's of data contained within Flames some
+ * of these objects have the potential to become invalid if the underlying data
+ * within the Flame is deleted. If needed, use the isValid() methods to ensure
+ * the objects which provide views of the data remain valid.
+ * <p>
+ * Note 1: The arrays backing the vectors within the flame only grow and never
+ * shrink, and, when they grow, they only grow to the minimum length required.
+ * <p>
+ * Note 2: The object that provide views of a flame's data (e.g. Transform or
+ * FlameColoration) use lazy initialization.
+ * <p>
+ * Note 3: Flame implements Serializable, though this has not been tested 
+ * robustly. FlameRendererOpenCL uses {@link Object#equals(Object obj)} to test 
+ * VariationDefinition instances for equality. This is supposed to decrease the
+ * time spent recompiling the kernel in the event that the two flames use the
+ * same set of variations. I think that if Flames are deserialized independently
+ * that the VariationDefinition instances they contain will fail the 
+ * {@code equals()} test, though the data they contain will be identical. I could write a 
+ * comparator, but it would involves string compares and speed preferred over
+ * serialization support. Also of note, references to objects that provide views
+ * of the data (e.g. Transform) are marked as transient.
+ * 
+ * @see FlameBackground
+ * @see FlameColoration
+ * @see FlameView
+ * @see Transform
+ * @see TransformAffine
+ * @see TransformColor
+ * @see VariationDefinition
+ * @see VariationInstance
+ * 
  * @author Jeremiah N. Hankins
  */
 public class Flame implements Serializable {
