@@ -54,7 +54,7 @@ public abstract class FlameRenderer {
     // Updates Generate Images
     protected boolean updateImages = false;
     // Dynamically adjust batch sizes to reduce overhead
-    protected boolean isAccelerated = true;
+    protected boolean isAccelerated = false;
     
     // Shutdown Hook
     private final Thread shutdownHook = new Thread() {
@@ -321,8 +321,16 @@ public abstract class FlameRenderer {
      * checks or updates. In practice a formula like the following is used so 
      * that the algorithm can converge on a solution with a minimum number of
      * limit checks and updates: 
-     * {@code batchSize = predicitedBatchSize*9/10 + 5}.
-     * 
+     * <pre>{@code batchSize = predicitedBatchSize*9/10 + 5}</pre>
+     * <b>Warning:</b>The purpose of this flag is to get the program to spend
+     * a majority of its time inside of an OpenCL kernel. This means that the
+     * kernel can run for relatively long periods of time (potentially several 
+     * seconds). If this flag is used and the program is executed on a GPU, the
+     * video driver may temporarily stop responding to the operating system
+     * causing the OS to cancel the operation by resetting the driver. See
+     * <a href="http://stackoverflow.com/a/25116354">http://stackoverflow.com/a/25116354</a>
+     * for potential ways to fix this problem though OS and driver settings.
+     * <p>
      * Some subclasses of {@code FlameRenderer} may choose to ignore this flag.
      * 
      * @param isAccelerated the accelerated algorithm flag
