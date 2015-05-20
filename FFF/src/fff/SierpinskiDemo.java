@@ -59,22 +59,22 @@ public class SierpinskiDemo {
             // Create an OpenCL flame renderer
             FlameRenderer renderer = new FlameRendererOpenCL(DeviceType.ALL);
             renderer.setUpdateImages(true);
-            System.out.println(renderer);
+            renderer.setUpdateRate(10); // 10 updates per second
+            System.out.println(renderer+"\n");
 
             // Create the image settings
             FlameRendererSettings settings = new FlameRendererSettings();
             settings.setWidth(1920);
             settings.setHeight(1080);
             settings.setMaxQuality(200);
-            System.out.println(settings);
+            System.out.println(settings+"\n");
 
             // Create the flame
             Flame flame = Flame.newSierpinski();
-            System.out.println(flame);
+            System.out.println(flame+"\n");
 
             // Create an output listener
             FlameRendererListener listener = new FlameRendererListener() {
-                
                 // This method is called asynchonously by one of the flame 
                 // renderer's interal threads after the enqueueTask() method
                 // has been caled
@@ -97,7 +97,7 @@ public class SierpinskiDemo {
                         }
                         
                         // Rendering is complete, tell the program to exit
-                        System.out.println("Done");
+                        System.out.println("\nDone");
                         System.exit(0);
                     }
                 };
