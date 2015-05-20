@@ -34,10 +34,30 @@ import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
 
 /**
+ * DynamicJavaCompiler provides access to a static method that dynamically
+ * compiles Java source code and constructs and returns a new instance of the
+ * specified class contained within that code.
  *
  * @author Jeremiah N. Hankins
  */
 public class DynamicJavaCompiler {
+    
+    /**
+     * Dynamically compiles Java source code and constructs and returns a new
+     * instance of the specified class contained within that code.
+     * <p>
+     * Example usage:
+     * <pre>{@code VariationFunction func = DynamicJavaCompiler.compile(VariationFunction.class, "fff.flame.VariationFunctionImpl", variationFunctionCode, dl);}</pre>
+     * 
+     * @param <T> the interface of the class to be compiled 
+     * @param classInterface the class of the interface of the class to be compiled 
+     * @param className the name of the class to be compiled
+     * @param javaCode the source code to be compiled
+     * @param dl a compiler diagnostic listener, optionally null
+     * @return a instance of the compiled class
+     * 
+     * @throws RuntimeException if ClassNotFoundException, InstantiationException, or IllegalAccessException is encountered
+     */
     public static <T> T compile(Class<T> classInterface, String className, String javaCode, DiagnosticListener<JavaFileObject> dl) {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         MyJavaFileManager fileManager = new MyJavaFileManager(

@@ -44,7 +44,7 @@ import java.util.TreeMap;
  * <p>
  * Specifically, {@code VaraitionInstances} contain a reference to the 
  * {@link #getDefinition() definition} of the variation, a scalar 
- * {@link #setCoefficient(float)coefficient} which scales the output of
+ * {@link #setCoefficient(float) coefficient} which scales the output of
  * the variation function, and the values of additional
  * {@link #setParameter(java.lang.String, float) parameters} that the variation
  * function takes as arguments. The names and default values of the parameters

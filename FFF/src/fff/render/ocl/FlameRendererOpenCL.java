@@ -302,7 +302,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
         str.append("  CL_DEVICE_INDEX:     ").append(platformIndex).append('\n');
         str.append("  CL_DEVICE_NAME:      ").append(getDeviceName()).append('\n');
         str.append("  CL_DEVICE_MAX_CLOCK_FREQUENCY: ").append(getDeviceMaxClockFrequency()).append('\n');
-        str.append("  CL_DEVICE_MAX_COMPUTE_UNITS:   ").append(getDeviceMaxComputeUnits()).append('\n');
+        str.append("  CL_DEVICE_MAX_COMPUTE_UNITS:   ").append(getDeviceMaxComputeUnits());
         return str.toString();
     }
     
