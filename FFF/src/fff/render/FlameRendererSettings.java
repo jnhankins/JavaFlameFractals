@@ -26,8 +26,7 @@
 package fff.render;
 
 /**
- * Class {@code FlameRendererSettings} contains settings used by a 
- * {@link FlameRenderer}
+ * A set of parameter that influence the appearance of a flame image.
  * 
  * @author Jeremiah N. Hankins
  */
@@ -43,6 +42,7 @@ public class FlameRendererSettings {
     private boolean usePostAffines;
     private boolean useFinalTransform;
     private boolean useJitter;
+    private boolean useAcceleratedBatching;
     // Blur Kernel
     private boolean useBlur;
     private float blurAlpha;
@@ -50,7 +50,7 @@ public class FlameRendererSettings {
     private float blurMinRadius;
     
     /**
-     * Constructs a new {@code FlameRendererSettings} with default values.
+     * Constructs a new {@code FlameRenderSettings} with default values.
      */
     public FlameRendererSettings() {
         width = 1280;
@@ -68,10 +68,10 @@ public class FlameRendererSettings {
     }
     
     /**
-     * Constructs a new {@code FlameRendererSettings} by copying the given 
-     * {@code FlameRendererSettings}.
+     * Constructs a new {@code FlameRenderSettings} by copying the given 
+     * {@code FlameRenderSettings}.
      * 
-     * @param settings the {@code FlameRendererSettings} to copy
+     * @param settings the {@code FlameRenderSettings} to copy
      * @throws IllegalArgumentException if {@code settings} is {@code null}
      */
     public FlameRendererSettings(FlameRendererSettings settings) {
@@ -96,6 +96,7 @@ public class FlameRendererSettings {
         usePostAffines = settings.usePostAffines;
         useFinalTransform = settings.useFinalTransform;
         useJitter = settings.useJitter;
+        useAcceleratedBatching = settings.useAcceleratedBatching;
         useBlur = settings.useBlur;
         blurAlpha = settings.blurAlpha;
         blurMinRadius = settings.blurMinRadius;

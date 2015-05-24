@@ -26,36 +26,42 @@
 package fff.render;
 
 import fff.flame.Flame;
-import java.util.Arrays;
-import java.util.List;
 
 /**
- *
+ * A {@link FlameRendererTask} implementation for a rendering single flames.
+ * 
  * @author Jeremiah N. Hankins
  */
-public class FlameRendererTaskSingle extends AbstractFlameRendererTask {
+public class FlameRendererTaskSingle extends FlameRendererTask {
     private Flame flame;
-    private boolean hasNextFlame = true;
-    
-    public FlameRendererTaskSingle(Flame flame, FlameRendererSettings settings, FlameRendererListener... listeners) {
-        this(flame, settings, Arrays.asList(listeners));
-    }
-    
-    public FlameRendererTaskSingle(Flame flame, FlameRendererSettings settings, List<FlameRendererListener> listeners) {
-        super(settings, listeners);
-        if (flame == null)
-            throw new IllegalArgumentException("flame is null");
+
+    /**
+     * Constructs a new {@code FlameRendererTask} for rendering the given
+     * {@link Flame flame} with the given
+     * {@link FlameRendererSettings render engine settings} and
+     * {@link FlameRendererCallback callback function}.
+     * 
+     * @param settings the render engine settings
+     * @param callback the callback function
+     * @param flame the flame
+     */
+    public FlameRendererTaskSingle(
+            FlameRendererCallback callback,
+            FlameRendererSettings settings, 
+            Flame flame) {
+        super(callback, settings);
         this.flame = flame;
     }
     
     @Override
     public boolean hasNextFlame() {
-        return hasNextFlame;
+        return flame != null;
     }
 
     @Override
     public Flame getNextFlame() {
-        hasNextFlame = false;
-        return flame;
+        Flame nextFlame = flame;
+        flame = null;
+        return nextFlame;
     }
 }

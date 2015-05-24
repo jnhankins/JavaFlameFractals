@@ -29,21 +29,30 @@ import fff.flame.Flame;
 import java.awt.image.BufferedImage;
 
 /**
- *
+ * An interface providing a method for asynchronous communication between a
+ * {@link FlameRenderer} and the rest of the program.
+ * 
  * @author Jeremiah N. Hankins
  */
-public interface FlameRendererListener {
-    
+public interface FlameRendererCallback {
     /**
-     * This method is called by classes {@link fff.render.FlameRenderer FlameRenderer}. 
+     * Called asynchronously by a {@link FlameRenderer} to deliver progress
+     * updates and final results while rendering a flame image.
      * 
-     * @param task
-     * @param flame
-     * @param image
-     * @param quality
-     * @param points
-     * @param elapsedTime
-     * @param isFinished 
+     * @param task the task which generated the flame
+     * @param flame the flame being rendered
+     * @param image the current image of the flame
+     * @param quality the quality of the image
+     * @param points the number of points plotted to render the image
+     * @param elapsedTime the amount of time in seconds spent rendering the image
+     * @param isFinished {@code true} if the image is finished, {@code false} if work on the image is ongoing
      */
-    public void flameImageEvent(FlameRendererTask task, Flame flame, BufferedImage image, double quality, double points, double elapsedTime, boolean isFinished);
+    public void flameRendererCallback(
+            FlameRendererTask task, 
+            Flame flame, 
+            BufferedImage image, 
+            double quality, 
+            double points, 
+            double elapsedTime, 
+            boolean isFinished);
 }

@@ -28,7 +28,7 @@ package fff.render.ocl;
 import fff.flame.Flame;
 import fff.flame.VariationDefinition;
 import fff.render.FlameRenderer;
-import fff.render.FlameRendererListener;
+import fff.render.FlameRendererCallback;
 import fff.render.FlameRendererSettings;
 import fff.render.FlameRendererTask;
 import java.awt.image.BufferedImage;
@@ -126,11 +126,14 @@ public class FlameRendererOpenCL extends FlameRenderer {
     private long updateInterval;
     private long preUpdateTime;
     
+    // If true, use the accerlated batching algorithm
+    private boolean isAccelerated = false;
+    
     // Current flame, settings, and listeners
     private FlameRendererTask task;
     private Flame flame;
     private FlameRendererSettings settings;
-    private FlameRendererListener[] listeners;
+    private FlameRendererCallback callback;
     
     static {
         // Enable exceptions
@@ -282,12 +285,12 @@ public class FlameRendererOpenCL extends FlameRenderer {
     }
 
     @Override
-    public void setUpdateRate(double rate) {
-        super.setUpdateRate(rate);
-        if (rate <= 0) {
+    public void setUpdatesPerSec(double updatesPerSecond) {
+        super.setUpdatesPerSec(updatesPerSecond);
+        if (updatesPerSecond <= 0) {
             updateInterval = 0;
         } else {
-            updateInterval = Math.max((long)(1e9/rate), 1);
+            updateInterval = Math.max((long)(1e9/updatesPerSecond), 1);
         }
     }
     
@@ -307,7 +310,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
     }
     
     @Override
-    protected void initializeResources() {
+    protected void initResources() {
         // Initialize code templates
         loadCodeTempaltes();
         // Create the context
@@ -360,7 +363,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
     }
 
     @Override
-    protected boolean releaseResources() {
+    protected void freeResources() {
         // Work Size
         workSize = -1;
 
@@ -415,16 +418,13 @@ public class FlameRendererOpenCL extends FlameRenderer {
         // OpenCL Data
         if (queue != null) { clReleaseCommandQueue(queue); queue = null; }
         if (context != null) { clReleaseContext(context); context = null; }
-        
-        // Return false to indicate that the thread has not been interrupted
-        return false;
     }
     
     @Override
     protected void renderNextFlame(FlameRendererTask task) {
         // Store the task
         this.task = task;
-        listeners = task.getListeners();
+        callback = task.getCallback();
         settings = task.getSettings();
         flame = task.getNextFlame();
         
@@ -484,23 +484,26 @@ public class FlameRendererOpenCL extends FlameRenderer {
         // If the renderer is overdue for a preview image, force one to happen
         boolean forcePreview = updateImages && updateInterval > 0 && currTime >= preUpdateTime+updateInterval;
         
+        // Set the batch size. Always starts at 1. May change each iteration if 
+        // the isAccelerated flag is set to true.
         int[] batchSize = new int[] { 1 };
         Pointer batchPointer = Pointer.to(batchSize);
         clSetKernelArg(plotKernel, 15, Sizeof.cl_int, batchPointer);
         
+        // Store a copy of the isAccerlated flag on the stack, so that if the
+        // flag changes mid render, an error does not occur.
+        boolean isAccel = isAccelerated;
+        
         // Perform the main ploting cycle
-        while ((!task.isCancled() || forcePreview) && currQuality < maxQuality && elapTime < maxTime) {
+        while ((!task.isCancelled()|| forcePreview) && currQuality < maxQuality && elapTime < maxTime) {
             // If it is time to update
             if (updateInterval > 0 && currTime >= preUpdateTime+updateInterval) {
                 // If not generating update image...
                 if (!updateImages) {
-                    // 
-                    for (int l=0; l<listeners.length; l++) {
-                        // Send a
-                        listeners[l].flameImageEvent(task, flame, null, currQuality, numIter*workSize, elapTime, false);
-                        // Calculate the 'previous' update time
-                        preUpdateTime = Math.max(preUpdateTime+updateInterval, currTime-updateInterval);
-                    }
+                    // Send a progress update callback without an image
+                    callback.flameRendererCallback(task, flame, null, currQuality, numIter*workSize, elapTime, false);
+                    // Calculate the 'previous' update time
+                    preUpdateTime = Math.max(preUpdateTime+updateInterval, currTime-updateInterval);
                 } else if (numIter >= 20) {
                     // Update the image
                     updateImage(currQuality, numIter*workSize, startTime, false);
@@ -509,7 +512,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
                     // Unset the force preview flag
                     forcePreview = false;
                     // If we just previewed and the task is cancled, return
-                    if (task.isCancled()) {
+                    if (task.isCancelled()) {
                         return;
                     }
                 }
@@ -564,11 +567,11 @@ public class FlameRendererOpenCL extends FlameRenderer {
             numIter += batchSize[0];
             
             // If using the accelerated batching algorithm...
-            if (isAccelerated) {
+            if (isAccel) {
                 // Calculate the next batch size based on remaining quality
                 int qBatchSize = (int)((maxQuality-currQuality)/((currQuality-oldQuality)/batchSize[0]));
                 // Determine the amount of time for the next batch (max 2 sec)
-                double dTime = (maxTime-elapTime < 1/updateRate ? maxTime-elapTime : 1/updateRate);
+                double dTime = (maxTime-elapTime < 1/updatesPerSec ? maxTime-elapTime : 1/updatesPerSec);
                 // Calculate the next batch size based on remaining time
                 int tBatchSize = (int)(dTime*1e9/(batchTime/batchSize[0]));
                 // Make the batch size the smaller of the two calculated above
@@ -581,7 +584,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
         }
         
         // If the task has not been cancled, update the final image
-        if (!task.isCancled()) {
+        if (!task.isCancelled()) {
             // Update the image
             updateImage(currQuality, numIter*workSize, startTime, true);
         }
@@ -1006,10 +1009,51 @@ public class FlameRendererOpenCL extends FlameRenderer {
         // Determine the elapsed time (since work began on this image)
         double elapTime = (System.nanoTime()-startTime)*1e-9;
         // Alert the image listeners
-        for (int l=0; l<listeners.length; l++) {
-            listeners[l].flameImageEvent(task, flame, frontImage, quality, points, elapTime, isFinished);
-        }
+        callback.flameRendererCallback(task, flame, frontImage, quality, points, elapTime, isFinished);
     }
+    
+    
+    
+    /**
+     * Sets a flag that, if set to {@code true} tells the renderer to to perform
+     * plotting iterations in batches, and to attempt to dynamically adjust the
+     * batch size so that the fewest batches are needed to complete the final
+     * image. The purpose of this flag is to reduce the amount of overhead time
+     * spent checking whether or not the current quality and elapsed time have
+     * exceeded the maximum quality or time. This is done by predicting how 
+     * many more iterations will be necessary before either the quality or 
+     * time limit are reached and then performing those iterations without 
+     * checks or updates. In practice a formula like the following is used so 
+     * that the algorithm can converge on a solution with a minimum number of
+     * limit checks and updates: 
+     * <pre>{@code batchSize = predicitedBatchSize*9/10 + 5}</pre>
+     * <b>Warning:</b>The purpose of this flag is to get the program to spend
+     * a majority of its time inside of an OpenCL kernel. This means that the
+     * kernel can run for relatively long periods of time (potentially several 
+     * seconds). If this flag is used and the program is executed on a GPU, the
+     * video driver may temporarily stop responding to the operating system
+     * causing the OS to cancel the operation by resetting the driver. See
+     * <a href="http://stackoverflow.com/a/25116354">http://stackoverflow.com/a/25116354</a>
+     * for potential ways to fix this problem though OS and driver settings.
+     * <p>
+     * Some subclasses of {@code FlameRenderer} may choose to ignore this flag.
+     * 
+     * @param isAccelerated the accelerated algorithm flag
+     */
+    public void setAccerlated(boolean isAccelerated) {
+        this.isAccelerated = isAccelerated;
+    }
+    
+    /**
+     * Returns the accelerated flag.
+     * 
+     * @return the accelerated flag
+     * @see #setAccelerated(boolean)
+     */
+    public boolean isAccelerated() {
+        return this.isAccelerated;
+    }
+    
     
     private static cl_platform_id[] getAllPlatforms() {
         int numPlatforms[] = new int[1];

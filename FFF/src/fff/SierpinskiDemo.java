@@ -27,7 +27,7 @@ package fff;
 
 import fff.flame.Flame;
 import fff.render.FlameRenderer;
-import fff.render.FlameRendererListener;
+import fff.render.FlameRendererCallback;
 import fff.render.FlameRendererSettings;
 import fff.render.FlameRendererTask;
 import fff.render.FlameRendererTaskSingle;
@@ -59,7 +59,8 @@ public class SierpinskiDemo {
             // Create an OpenCL flame renderer
             FlameRenderer renderer = new FlameRendererOpenCL(DeviceType.ALL);
             renderer.setUpdateImages(true);
-            renderer.setUpdateRate(10); // 10 updates per second
+            renderer.setUpdatesPerSec(10);
+            renderer.start();
             System.out.println(renderer+"\n");
 
             // Create the image settings
@@ -73,13 +74,13 @@ public class SierpinskiDemo {
             Flame flame = Flame.newSierpinski();
             System.out.println(flame+"\n");
 
-            // Create an output listener
-            FlameRendererListener listener = new FlameRendererListener() {
+            // Create the callback function
+            FlameRendererCallback callback = new FlameRendererCallback() {
                 // This method is called asynchonously by one of the flame 
                 // renderer's interal threads after the enqueueTask() method
                 // has been caled
                 @Override
-                public void flameImageEvent(FlameRendererTask task, Flame flame, BufferedImage image, double quality, double points, double elapTime, boolean isFinished) {
+                public void flameRendererCallback(FlameRendererTask task, Flame flame, BufferedImage image, double quality, double points, double elapTime, boolean isFinished) {
                     
                     // Display progress updates
                     System.out.println(String.format("Drawn %.2fM dots at %.2fM dots/sec for quality of %.2f.", points/1e7, points/(1e7*elapTime), quality));
@@ -88,7 +89,7 @@ public class SierpinskiDemo {
                     if (isFinished) {
                         
                         // Try to write the image as a PNG file
-                        System.out.println("Writing PNG image file: "+fileName);
+                        System.out.println("\nWriting PNG image file: "+fileName);
                         try {
                             ImageIO.write(image, "png", new File(fileName));
                         } catch (IOException ex) {
@@ -98,17 +99,19 @@ public class SierpinskiDemo {
                         
                         // Rendering is complete, tell the program to exit
                         System.out.println("\nDone");
-                        System.exit(0);
                     }
                 };
             };
 
             // Create a render task to render the flame with the given settings and 
             // output listener
-            FlameRendererTaskSingle task = new FlameRendererTaskSingle(flame, settings, listener);
+            FlameRendererTaskSingle task = new FlameRendererTaskSingle(callback, settings, flame);
 
             // Pass the rendering task to the flame renderer renderer
-            renderer.enqueueTask(task);
+            renderer.getQueue().add(task);
+            
+            // Tell the renderer to shutdown when the task is complete
+            renderer.shutdown();
         
         } catch (Exception ex) {
             // Print any exceptions that have been thrown to the err stream
