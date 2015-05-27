@@ -126,9 +126,6 @@ public class FlameRendererOpenCL extends FlameRenderer {
     private long updateInterval;
     private long preUpdateTime;
     
-    // If true, use the accerlated batching algorithm
-    private boolean isAccelerated = false;
-    
     // Current flame, settings, and listeners
     private FlameRendererTask task;
     private Flame flame;
@@ -493,6 +490,12 @@ public class FlameRendererOpenCL extends FlameRenderer {
         // Store a copy of the isAccerlated flag on the stack, so that if the
         // flag changes mid render, an error does not occur.
         boolean isAccel = isAccelerated;
+        //
+        double maxBatchTime = 0;
+        if (updatesPerSec > 0)
+            maxBatchTime = 1/updatesPerSec;
+        if (maxBatchTimeSec > maxBatchTime)
+            maxBatchTime = maxBatchTimeSec;
         
         // Perform the main ploting cycle
         while ((!task.isCancelled()|| forcePreview) && currQuality < maxQuality && elapTime < maxTime) {
@@ -568,16 +571,40 @@ public class FlameRendererOpenCL extends FlameRenderer {
             
             // If using the accelerated batching algorithm...
             if (isAccel) {
-                // Calculate the next batch size based on remaining quality
-                int qBatchSize = (int)((maxQuality-currQuality)/((currQuality-oldQuality)/batchSize[0]));
-                // Determine the amount of time for the next batch (max 2 sec)
-                double dTime = (maxTime-elapTime < 1/updatesPerSec ? maxTime-elapTime : 1/updatesPerSec);
-                // Calculate the next batch size based on remaining time
-                int tBatchSize = (int)(dTime*1e9/(batchTime/batchSize[0]));
-                // Make the batch size the smaller of the two calculated above
-                int iBatchSize = (qBatchSize < tBatchSize ? qBatchSize : tBatchSize);
+                // Caclulate the improvement in quality per second
+                double qrate = (currQuality - oldQuality)/(batchTime*1e9);
+                // Caclualte the seconds remaining based on quality
+                double dtime = (maxQuality - currQuality)/qrate;
+                // Reduce the time for the next batch based on max-time
+                dtime = Math.max(dtime, maxTime - elapTime);
+                // If using a max batch-time...
+                if (maxBatchTime > 0) {
+                    // Limit by the max batch-time
+                    dtime = Math.min(dtime, maxBatchTime);
+                } else  {
+                    // If not using a max batch-time, only do 90% of the
+                    // estimated remaining work since earlier iterations tend
+                    // to be slower than later ones. This should help to prevent
+                    // using too many iterations
+                    dtime = dtime * 0.9; 
+                }
+                // Reduce the time for the next batch based on the next update
+                // Calc the batch next batch-size based on the batch-time
+                int iBatchSize = (int)(batchSize[0]*dtime/batchTime*1e9);
                 // Ensure the batch size is atleast one
                 batchSize[0] = iBatchSize <= 0? 1 : iBatchSize;
+                
+                
+//                int qBatchSize = (int)((maxQuality-currQuality)/((currQuality-oldQuality)/batchSize[0]));
+//                // Determine the amount of time for the next batch (max 2 sec)
+//                double dTime = (maxTime-elapTime < 1/updatesPerSec ? maxTime-elapTime : 1/updatesPerSec);
+//                // Calculate the next batch size based on remaining time
+//                int tBatchSize = (int)(dTime*1e9/(batchTime/batchSize[0]));
+//                // Make the batch size the smaller of the two calculated above
+//                int iBatchSize = (qBatchSize < tBatchSize ? qBatchSize : tBatchSize);
+//                // Ensure the batch size is atleast one
+//                batchSize[0] = iBatchSize <= 0? 1 : iBatchSize;
+                
                 // Set the batch size argument
                 clSetKernelArg(plotKernel, 15, Sizeof.cl_int, batchPointer);
             }
@@ -1011,49 +1038,6 @@ public class FlameRendererOpenCL extends FlameRenderer {
         // Alert the image listeners
         callback.flameRendererCallback(task, flame, frontImage, quality, points, elapTime, isFinished);
     }
-    
-    
-    
-    /**
-     * Sets a flag that, if set to {@code true} tells the renderer to to perform
-     * plotting iterations in batches, and to attempt to dynamically adjust the
-     * batch size so that the fewest batches are needed to complete the final
-     * image. The purpose of this flag is to reduce the amount of overhead time
-     * spent checking whether or not the current quality and elapsed time have
-     * exceeded the maximum quality or time. This is done by predicting how 
-     * many more iterations will be necessary before either the quality or 
-     * time limit are reached and then performing those iterations without 
-     * checks or updates. In practice a formula like the following is used so 
-     * that the algorithm can converge on a solution with a minimum number of
-     * limit checks and updates: 
-     * <pre>{@code batchSize = predicitedBatchSize*9/10 + 5}</pre>
-     * <b>Warning:</b>The purpose of this flag is to get the program to spend
-     * a majority of its time inside of an OpenCL kernel. This means that the
-     * kernel can run for relatively long periods of time (potentially several 
-     * seconds). If this flag is used and the program is executed on a GPU, the
-     * video driver may temporarily stop responding to the operating system
-     * causing the OS to cancel the operation by resetting the driver. See
-     * <a href="http://stackoverflow.com/a/25116354">http://stackoverflow.com/a/25116354</a>
-     * for potential ways to fix this problem though OS and driver settings.
-     * <p>
-     * Some subclasses of {@code FlameRenderer} may choose to ignore this flag.
-     * 
-     * @param isAccelerated the accelerated algorithm flag
-     */
-    public void setAccerlated(boolean isAccelerated) {
-        this.isAccelerated = isAccelerated;
-    }
-    
-    /**
-     * Returns the accelerated flag.
-     * 
-     * @return the accelerated flag
-     * @see #setAccelerated(boolean)
-     */
-    public boolean isAccelerated() {
-        return this.isAccelerated;
-    }
-    
     
     private static cl_platform_id[] getAllPlatforms() {
         int numPlatforms[] = new int[1];

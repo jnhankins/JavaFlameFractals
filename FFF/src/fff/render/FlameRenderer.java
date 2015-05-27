@@ -126,6 +126,21 @@ public abstract class FlameRenderer {
      */
     protected boolean updateImages = false;
     
+    /** 
+     * If true, use the accelerated batching algorithm.
+     * @see #setAccerlated(boolean) 
+     */
+    protected boolean isAccelerated = false;
+    
+    /**
+     * Maximum batch time. 
+     * Used by the accelerated batching algorithm to limit time spent working
+     * any given batch.
+     * @see #setMaxBatchTimeSec(double)
+     * @see #setAccerlated(boolean) 
+     */
+    protected double maxBatchTimeSec = 1;
+    
     /**
      * Returns the task queue for the {@code FlameRenderEngine}.
      * 
@@ -312,6 +327,81 @@ public abstract class FlameRenderer {
      */
     public boolean getUpdateImages() {
         return updateImages;
+    }
+    
+    /**
+     * Sets a flag that, if set to {@code true} tells the renderer to to perform
+     * plotting iterations in batches, and to attempt to dynamically adjust the
+     * batch size so that the fewest batches are needed to complete the final
+     * image. The purpose of this flag is to reduce the amount of overhead time
+     * spent checking whether or not the current quality and elapsed time have
+     * exceeded the maximum quality or time. This is done by predicting how 
+     * many more iterations will be necessary before either the quality or 
+     * time limit are reached and then performing those iterations without 
+     * checks or updates.
+     * <p>
+     * The maximum time that can pass between checks is limited by the
+     * {@link #setUpdatesPerSec(double) update rate}, the
+     * {@link #setMaxBatchTimeSec(double) maximum batch time}, the 
+     * {@link FlameRendererSettings#setMaxQuality(double) maximum quality}, and
+     * the {@link FlameRendererSettings#setMaxTime(double) maximum render time},
+     * whichever comes first.
+     * <p>When this flag is set, the {@code FlameRenderer} may reduce the number
+     * of updates per second by as much as half of what the 
+     * {@code updatesPerSec} parameter would normally imply.
+     * <p>
+     * Implementations of {@code FlameRenderer} may choose to ignore this flag.
+     * 
+     * @param isAccelerated the accelerated algorithm flag
+     */
+    public void setAccerlated(boolean isAccelerated) {
+        this.isAccelerated = isAccelerated;
+    }
+    
+    /**
+     * Returns the accelerated flag.
+     * 
+     * @return the accelerated flag
+     * @see #setAccelerated(boolean)
+     */
+    public boolean isAccelerated() {
+        return this.isAccelerated;
+    }
+    
+    /**
+     * Sets the maximum time the renderer will spend working on a single batch
+     * when using the batch-accelerated algorithm. If set to {@code 0}, there
+     * will be no limit to the time spent working on a single batch.
+     * <p>
+     * <b>Warning:</b>The purpose of this flag is to get the program to spend
+     * a majority of its time inside of an OpenCL kernel. This means that the
+     * kernel can run for relatively long periods of time (potentially several 
+     * seconds). If this flag is used and the program is executed on a GPU, the
+     * video driver may temporarily stop responding to the operating system
+     * causing the OS to cancel the operation by resetting the driver. Use a
+     * lower batch time or see
+     * <a href="http://stackoverflow.com/a/25116354">http://stackoverflow.com/a/25116354</a>
+     * for potential ways to fix this problem though OS and driver settings.
+     * 
+     * @param maxBatchTimeSec the maximum time to spend on a single batch
+     * @see #setAccerlated(boolean) 
+     */
+    public void setMaxBatchTimeSec(double maxBatchTimeSec) {
+        if (!(0<=maxBatchTimeSec && maxBatchTimeSec < Double.POSITIVE_INFINITY))
+            throw new IllegalArgumentException("maxBatchTimeSec is not in range [0,inf): "+maxBatchTimeSec);
+        this.maxBatchTimeSec = maxBatchTimeSec;
+    }
+    
+    /**
+     * Returns the maximum time the renderer will spend working on a single
+     * batch while using the batch-accelerated algorithm.
+     * 
+     * @return the maximum time to spend on a single batch
+     * @see #setMaxBatchTimeSec(double) 
+     * @see #setAccerlated(boolean) 
+     */
+    public double getMaxBatchTimeSec() {
+        return maxBatchTimeSec;
     }
     
     /**

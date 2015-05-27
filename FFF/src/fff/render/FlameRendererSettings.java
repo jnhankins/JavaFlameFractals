@@ -42,7 +42,6 @@ public class FlameRendererSettings {
     private boolean usePostAffines;
     private boolean useFinalTransform;
     private boolean useJitter;
-    private boolean useAcceleratedBatching;
     // Blur Kernel
     private boolean useBlur;
     private float blurAlpha;
@@ -96,7 +95,6 @@ public class FlameRendererSettings {
         usePostAffines = settings.usePostAffines;
         useFinalTransform = settings.useFinalTransform;
         useJitter = settings.useJitter;
-        useAcceleratedBatching = settings.useAcceleratedBatching;
         useBlur = settings.useBlur;
         blurAlpha = settings.blurAlpha;
         blurMinRadius = settings.blurMinRadius;
