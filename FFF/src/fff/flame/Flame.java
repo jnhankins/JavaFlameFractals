@@ -788,7 +788,7 @@ public class Flame implements Serializable {
         // Coloration
         flame.getColoration().set(2, 2, 1);
         // Backgorund Color
-        flame.getBackground().set(1, 0, 0, 0);
+        flame.getBackground().set(0, 0, 0, 1);
         // Return the flame
         return flame;
     }
