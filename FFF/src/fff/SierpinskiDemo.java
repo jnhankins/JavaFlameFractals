@@ -59,7 +59,7 @@ public class SierpinskiDemo {
             // Create an OpenCL flame renderer
             FlameRenderer renderer = new FlameRendererOpenCL(DeviceType.ALL);
             renderer.setUpdateImages(true);
-            renderer.setUpdatesPerSec(10);
+            renderer.setUpdatesPerSec(25);
             renderer.start();
             System.out.println(renderer+"\n");
 
@@ -83,7 +83,7 @@ public class SierpinskiDemo {
                 public void flameRendererCallback(FlameRendererTask task, Flame flame, BufferedImage image, double quality, double points, double elapTime, boolean isFinished) {
                     
                     // Display progress updates
-                    System.out.println(String.format("Drawn %.2fM dots at %.2fM dots/sec for quality of %.2f.", points/1e7, points/(1e7*elapTime), quality));
+                    System.out.println(String.format("Drawn %.2fM dots in %.2f sec at %.2fM dots/sec for quality of %.2f.", points/1e7, elapTime, points/(1e7*elapTime), quality));
                     
                     // If the image is completed...
                     if (isFinished) {

@@ -423,19 +423,20 @@ public class FlameRendererSettings {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Settings(");
-        builder.append("width=").append(width).append(", ");
-        builder.append("height=").append(height).append(", ");
-        builder.append("maxTime=").append(maxTime).append(", ");
-        builder.append("maxQuality=").append(maxQuality).append(", ");
-        builder.append("useVariations=").append(useVariations).append(", ");
-        builder.append("usePostAffines=").append(usePostAffines).append(", ");
-        builder.append("useFinalTransform=").append(useFinalTransform).append(", ");
-        builder.append("useJitter=").append(useJitter).append(", ");;
-        builder.append("useBlur=").append(useBlur).append(", ");
-        builder.append("blurAlpha=").append(blurAlpha).append(", ");
-        builder.append("blurMinRadius=").append(blurMinRadius).append(", ");
-        builder.append("blurMaxRadius=").append(blurMaxRadius).append(")");
+        builder.append("Settings {\n");
+        builder.append("   width = ").append(width).append("\n");
+        builder.append("   height = ").append(height).append("\n");
+        builder.append("   maxTime = ").append(maxTime).append("\n");
+        builder.append("   maxQuality = ").append(maxQuality).append("\n");
+        builder.append("   useVariations = ").append(useVariations).append("\n");
+        builder.append("   usePostAffines = ").append(usePostAffines).append("\n");
+        builder.append("   useFinalTransform = ").append(useFinalTransform).append("\n");
+        builder.append("   useJitter = ").append(useJitter).append("\n");;
+        builder.append("   useBlur = ").append(useBlur).append("\n");
+        builder.append("   blurAlpha = ").append(blurAlpha).append("\n");
+        builder.append("   blurMinRadius = ").append(blurMinRadius).append("\n");
+        builder.append("   blurMaxRadius = ").append(blurMaxRadius).append("\n");
+        builder.append("}");
         return builder.toString();
     }
 }

@@ -294,15 +294,29 @@ public class FlameRendererOpenCL extends FlameRenderer {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        str.append("Flame Renderer\n");
-        str.append("  Type: OpenCL\n");
-        str.append("  CL_PLATFORM_INDEX:   ").append(platformIndex).append('\n');
-        str.append("  CL_PLATFORM_NAME:    ").append(getPlatformName()).append('\n');
-        str.append("  CL_PLATFORM_VERSION: ").append(getPlatformString(platform, CL_PLATFORM_VERSION)).append('\n');
-        str.append("  CL_DEVICE_INDEX:     ").append(platformIndex).append('\n');
-        str.append("  CL_DEVICE_NAME:      ").append(getDeviceName()).append('\n');
-        str.append("  CL_DEVICE_MAX_CLOCK_FREQUENCY: ").append(getDeviceMaxClockFrequency()).append('\n');
-        str.append("  CL_DEVICE_MAX_COMPUTE_UNITS:   ").append(getDeviceMaxComputeUnits());
+        str.append("Flame Renderer {\n");
+        str.append("   Status: ");
+        if (isRunning())
+            str.append("RUNNING\n");
+        else if (isShutdown())
+            str.append("SHUTDOWN\n");
+        else if (isTerminated())
+            str.append("TERMINATED\n");
+        else
+            str.append("READY\n");
+        str.append("   Type: OpenCL\n");
+        str.append("   CL_PLATFORM_INDEX:   ").append(platformIndex).append('\n');
+        str.append("   CL_PLATFORM_NAME:    ").append(getPlatformName()).append('\n');
+        str.append("   CL_PLATFORM_VERSION: ").append(getPlatformString(platform, CL_PLATFORM_VERSION)).append('\n');
+        str.append("   CL_DEVICE_INDEX:     ").append(platformIndex).append('\n');
+        str.append("   CL_DEVICE_NAME:      ").append(getDeviceName()).append('\n');
+        str.append("   CL_DEVICE_MAX_CLOCK_FREQUENCY: ").append(getDeviceMaxClockFrequency()).append('\n');
+        str.append("   CL_DEVICE_MAX_COMPUTE_UNITS:   ").append(getDeviceMaxComputeUnits()).append('\n');
+        str.append("   updatesPerSec: ").append(getUpdatesPerSec()).append('\n');
+        str.append("   updateImages:  ").append(getUpdateImages()).append('\n');
+        str.append("   isBatchAccelerated: ").append(this.isBatchAccerlated()).append('\n');
+        str.append("   maxBatchTime:       ").append(this.getMaxBatchTimeSec()).append('\n');
+        str.append("}");
         return str.toString();
     }
     
@@ -482,19 +496,19 @@ public class FlameRendererOpenCL extends FlameRenderer {
         boolean forcePreview = updateImages && updateInterval > 0 && currTime >= preUpdateTime+updateInterval;
         
         // Set the batch size. Always starts at 1. May change each iteration if 
-        // the isAccelerated flag is set to true.
+        // the isBatchAccerlated flag is set to true.
         int[] batchSize = new int[] { 1 };
         Pointer batchPointer = Pointer.to(batchSize);
         clSetKernelArg(plotKernel, 15, Sizeof.cl_int, batchPointer);
         
         // Store a copy of the isAccerlated flag on the stack, so that if the
         // flag changes mid render, an error does not occur.
-        boolean isAccel = isAccelerated;
+        boolean isAccel = isBatchAccelerated;
         //
         double maxBatchTime = 0;
         if (updatesPerSec > 0)
             maxBatchTime = 1/updatesPerSec;
-        if (maxBatchTimeSec > maxBatchTime)
+        if (maxBatchTimeSec > 0 && maxBatchTimeSec < maxBatchTime)
             maxBatchTime = maxBatchTimeSec;
         
         // Perform the main ploting cycle
@@ -572,38 +586,24 @@ public class FlameRendererOpenCL extends FlameRenderer {
             // If using the accelerated batching algorithm...
             if (isAccel) {
                 // Caclulate the improvement in quality per second
-                double qrate = (currQuality - oldQuality)/(batchTime*1e9);
+                double qrate = (currQuality - oldQuality)/(batchTime*1e-9);
+                
                 // Caclualte the seconds remaining based on quality
                 double dtime = (maxQuality - currQuality)/qrate;
+                
                 // Reduce the time for the next batch based on max-time
-                dtime = Math.max(dtime, maxTime - elapTime);
-                // If using a max batch-time...
-                if (maxBatchTime > 0) {
-                    // Limit by the max batch-time
+                dtime = Math.min(dtime, maxTime - elapTime);
+                    
+                // If using a max batch-time, limit by the max batch-time
+                if (maxBatchTime > 0)
                     dtime = Math.min(dtime, maxBatchTime);
-                } else  {
-                    // If not using a max batch-time, only do 90% of the
-                    // estimated remaining work since earlier iterations tend
-                    // to be slower than later ones. This should help to prevent
-                    // using too many iterations
-                    dtime = dtime * 0.9; 
-                }
+                
                 // Reduce the time for the next batch based on the next update
                 // Calc the batch next batch-size based on the batch-time
                 int iBatchSize = (int)(batchSize[0]*dtime/batchTime*1e9);
+                
                 // Ensure the batch size is atleast one
                 batchSize[0] = iBatchSize <= 0? 1 : iBatchSize;
-                
-                
-//                int qBatchSize = (int)((maxQuality-currQuality)/((currQuality-oldQuality)/batchSize[0]));
-//                // Determine the amount of time for the next batch (max 2 sec)
-//                double dTime = (maxTime-elapTime < 1/updatesPerSec ? maxTime-elapTime : 1/updatesPerSec);
-//                // Calculate the next batch size based on remaining time
-//                int tBatchSize = (int)(dTime*1e9/(batchTime/batchSize[0]));
-//                // Make the batch size the smaller of the two calculated above
-//                int iBatchSize = (qBatchSize < tBatchSize ? qBatchSize : tBatchSize);
-//                // Ensure the batch size is atleast one
-//                batchSize[0] = iBatchSize <= 0? 1 : iBatchSize;
                 
                 // Set the batch size argument
                 clSetKernelArg(plotKernel, 15, Sizeof.cl_int, batchPointer);

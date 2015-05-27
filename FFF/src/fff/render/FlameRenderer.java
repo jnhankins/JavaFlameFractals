@@ -128,16 +128,16 @@ public abstract class FlameRenderer {
     
     /** 
      * If true, use the accelerated batching algorithm.
-     * @see #setAccerlated(boolean) 
+     * @see #setBatchAccerlated(boolean) 
      */
-    protected boolean isAccelerated = false;
+    protected boolean isBatchAccelerated = true;
     
     /**
      * Maximum batch time. 
      * Used by the accelerated batching algorithm to limit time spent working
      * any given batch.
      * @see #setMaxBatchTimeSec(double)
-     * @see #setAccerlated(boolean) 
+     * @see #setBatchAccerlated(boolean) 
      */
     protected double maxBatchTimeSec = 1;
     
@@ -354,18 +354,18 @@ public abstract class FlameRenderer {
      * 
      * @param isAccelerated the accelerated algorithm flag
      */
-    public void setAccerlated(boolean isAccelerated) {
-        this.isAccelerated = isAccelerated;
+    public void setBatchAccerlated(boolean isAccelerated) {
+        this.isBatchAccelerated = isAccelerated;
     }
     
     /**
      * Returns the accelerated flag.
      * 
      * @return the accelerated flag
-     * @see #setAccelerated(boolean)
+     * @see #setBatchAccerlated(boolean)
      */
-    public boolean isAccelerated() {
-        return this.isAccelerated;
+    public boolean isBatchAccerlated() {
+        return this.isBatchAccelerated;
     }
     
     /**
@@ -384,7 +384,7 @@ public abstract class FlameRenderer {
      * for potential ways to fix this problem though OS and driver settings.
      * 
      * @param maxBatchTimeSec the maximum time to spend on a single batch
-     * @see #setAccerlated(boolean) 
+     * @see #setBatchAccerlated(boolean) 
      */
     public void setMaxBatchTimeSec(double maxBatchTimeSec) {
         if (!(0<=maxBatchTimeSec && maxBatchTimeSec < Double.POSITIVE_INFINITY))
@@ -398,7 +398,7 @@ public abstract class FlameRenderer {
      * 
      * @return the maximum time to spend on a single batch
      * @see #setMaxBatchTimeSec(double) 
-     * @see #setAccerlated(boolean) 
+     * @see #setBatchAccerlated(boolean) 
      */
     public double getMaxBatchTimeSec() {
         return maxBatchTimeSec;
