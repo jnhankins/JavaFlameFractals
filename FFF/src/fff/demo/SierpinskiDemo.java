@@ -23,7 +23,7 @@
  * SOFTWARE.
  */
 
-package fff;
+package fff.demo;
 
 import fff.flame.Flame;
 import fff.render.FlameRenderer;
@@ -58,9 +58,10 @@ public class SierpinskiDemo {
             
             // Create an OpenCL flame renderer
             FlameRenderer renderer = new FlameRendererOpenCL(DeviceType.ALL);
-            renderer.setUpdateImages(true);
             renderer.setUpdatesPerSec(25);
             renderer.start();
+            
+            // Display the renderer's settings
             System.out.println(renderer+"\n");
 
             // Create the image settings
@@ -68,10 +69,14 @@ public class SierpinskiDemo {
             settings.setWidth(1920);
             settings.setHeight(1080);
             settings.setMaxQuality(200);
+            
+            // Display the image's settings
             System.out.println(settings+"\n");
 
             // Create the flame
             Flame flame = Flame.newSierpinski();
+            
+            // Display the flame's "genome"
             System.out.println(flame+"\n");
 
             // Create the callback function
@@ -89,9 +94,10 @@ public class SierpinskiDemo {
                     if (isFinished) {
                         
                         // Try to write the image as a PNG file
-                        System.out.println("\nWriting PNG image file: "+fileName);
+                        File file = new File(fileName);
                         try {
-                            ImageIO.write(image, "png", new File(fileName));
+                            System.out.println("\nWriting PNG image file: "+file.getCanonicalPath());
+                            ImageIO.write(image, "png", file);
                         } catch (IOException ex) {
                             ex.printStackTrace(System.err);
                             System.exit(0);
@@ -108,6 +114,7 @@ public class SierpinskiDemo {
             FlameRendererTaskSingle task = new FlameRendererTaskSingle(callback, settings, flame);
 
             // Pass the rendering task to the flame renderer renderer
+            // Work will begin immediatly
             renderer.getQueue().add(task);
             
             // Tell the renderer to shutdown when the task is complete
