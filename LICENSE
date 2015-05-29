@@ -1,5 +1,5 @@
 FastFlameFractals (FFF):
-A library for rendering flame fractals asynchronously using Java and OpenCL.
+A library for rendering flame fractals using Java and OpenCL.
 
 Copyright (c) 2015 Jeremiah N. Hankins
 
