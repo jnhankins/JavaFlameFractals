@@ -25,12 +25,14 @@
 
 package fff.render;
 
+import java.io.Serializable;
+
 /**
  * A set of parameter that influence the appearance of a flame image.
  * 
  * @author Jeremiah N. Hankins
  */
-public class FlameRendererSettings {
+public class FlameRendererSettings implements Serializable {
     // Image Resolution
     private int width;
     private int height;
