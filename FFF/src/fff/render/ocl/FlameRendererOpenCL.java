@@ -879,7 +879,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
         ByteBuffer flameViewAffineBuffer = clEnqueueMapBuffer(queue, flameViewAffineMem, CL_NON_BLOCKING, CL_MAP_WRITE, 0, 6*Sizeof.cl_float, 0, null, null, null).order(ByteOrder.LITTLE_ENDIAN);
         ByteBuffer flameColorationBuffer = clEnqueueMapBuffer(queue, flameColorationMem, CL_NON_BLOCKING, CL_MAP_WRITE, 0, 3*Sizeof.cl_float, 0, null, null, null).order(ByteOrder.LITTLE_ENDIAN);
         ByteBuffer flameBackgroundBuffer = clEnqueueMapBuffer(queue, flameBackgroundMem, CL_NON_BLOCKING, CL_MAP_WRITE, 0, 4*Sizeof.cl_float, 0, null, null, null).order(ByteOrder.LITTLE_ENDIAN);
-        clFlush(queue);
+        clFinish(queue);
         // Write to the buffers
         flame.fillBuffers(settings.getWidth(), settings.getHeight(),
             xformWeightBuffer.asFloatBuffer(),
@@ -891,14 +891,17 @@ public class FlameRendererOpenCL extends FlameRenderer {
             flameViewAffineBuffer.asFloatBuffer(),
             flameColorationBuffer.asFloatBuffer(),
             flameBackgroundBuffer.asFloatBuffer());
-        xformWeightBuffer.rewind();
-//        print("xformWeightBuffer", 1, xformWeightBuffer.asFloatBuffer());
-//        print("xformCmixesBuffer", 1, xformCmixesBuffer.asFloatBuffer());
-//        print("xformColorsBuffer", 4, xformColorsBuffer.asFloatBuffer());
-//        print("xformAffineBuffer", 2, xformAffineBuffer.asFloatBuffer());
-//        print("xformVariationsBuffer", 1, xformVariationsBuffer.asFloatBuffer());
-//        print("xformParametersBuffer", 1, xformParametersBuffer.asFloatBuffer());
-//        print("flameViewAffineBuffer", 2, flameViewAffineBuffer.asFloatBuffer());
+        /* DEBUG 
+        printOut("xformWeightBuffer", 1, xformWeightBuffer.asFloatBuffer());
+        printOut("xformCmixesBuffer", 1, xformCmixesBuffer.asFloatBuffer());
+        printOut("xformColorsBuffer", 4, xformColorsBuffer.asFloatBuffer());
+        printOut("xformAffineBuffer", 2, xformAffineBuffer.asFloatBuffer());
+        printOut("xformVariationsBuffer", 1, xformVariationsBuffer.asFloatBuffer());
+        printOut("xformParametersBuffer", 1, xformParametersBuffer.asFloatBuffer());
+        printOut("aft: flameViewAffineBuffer", 2, flameViewAffineBuffer.asFloatBuffer());
+        printOut("flameColorationBuffer", 2, flameColorationBuffer.asFloatBuffer());
+        printOut("flameBackgroundBuffer", 2, flameBackgroundBuffer.asFloatBuffer());
+        */
         // Unmap the buffers
         clEnqueueUnmapMemObject(queue, xformWeightMem, xformWeightBuffer, 0, null, null);
         clEnqueueUnmapMemObject(queue, xformCmixesMem, xformCmixesBuffer, 0, null, null);
@@ -910,9 +913,22 @@ public class FlameRendererOpenCL extends FlameRenderer {
         clEnqueueUnmapMemObject(queue, flameColorationMem, flameColorationBuffer, 0, null, null);
         clEnqueueUnmapMemObject(queue, flameBackgroundMem, flameBackgroundBuffer, 0, null, null);
     }
-    /* FOR DEBUGGING
-    private void print(String name, int size, FloatBuffer buffer) {
-        try (FileWriter out = new FileWriter(new File(name+".csv"))) {
+    /* DEBUG
+    private static void printOut(String name, int size, FloatBuffer buffer) {
+        buffer.rewind();
+        System.out.print(name+": ");
+        for (int i=0; i<buffer.limit()/size; ) {
+            System.out.print("(");
+            for (int j=0; j<size; j++, i++) {
+                System.out.print(Float.toString(buffer.get()));
+                System.out.print(", ");
+            }
+            System.out.print(") ");
+        }
+        System.out.println();
+    }
+    private static void printCSV(String label, int size, FloatBuffer buffer) {
+        try (FileWriter out = new FileWriter(new File(label+".csv"))) {
             buffer.rewind();
             for (int i=0; i<buffer.limit(); ) {
                 for (int j=0; j<size; j++, i++) {
@@ -922,7 +938,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
                 out.write("\n");
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            ex.printStackTrace(System.err);
         }
     }
     */
