@@ -66,12 +66,12 @@ public class TransformAffine {
     /**
      * Sets the values of the {@code TransformAffine}.
      *
-     * @param a the a value
-     * @param b the b value
-     * @param c the c value
-     * @param d the d value
-     * @param e the e value
-     * @param f the f value
+     * @param a the {@code a} value
+     * @param b the {@code b} value
+     * @param c the {@code c} value
+     * @param d the {@code d} value
+     * @param e the {@code e} value
+     * @param f the {@code f} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      * @throws IllegalArgumentException if {@code a} is not in range (-inf,inf)
      * @throws IllegalArgumentException if {@code b} is not in range (-inf,inf)
@@ -90,9 +90,9 @@ public class TransformAffine {
     }
 
     /**
-     * Sets the a value.
+     * Sets the {@code a} value.
      *
-     * @param a the a value
+     * @param a the {@code a} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      * @throws IllegalArgumentException if {@code a} is not in range (-inf,inf)
      */
@@ -105,9 +105,9 @@ public class TransformAffine {
     }
 
     /**
-     * Sets the b value.
+     * Sets the {@code b} value.
      *
-     * @param b the b value
+     * @param b the {@code b} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      * @throws IllegalArgumentException if {@code b} is not in range (-inf,inf)
      */
@@ -120,9 +120,9 @@ public class TransformAffine {
     }
 
     /**
-     * Sets the c value.
+     * Sets the {@code c} value.
      *
-     * @param c the c value
+     * @param c the {@code c} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      * @throws IllegalArgumentException if {@code c} is not in range (-inf,inf)
      */
@@ -135,9 +135,9 @@ public class TransformAffine {
     }
 
     /**
-     * Sets the d value.
+     * Sets the {@code d} value.
      *
-     * @param d the d value
+     * @param d the {@code d} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      * @throws IllegalArgumentException if {@code d} is not in range (-inf,inf)
      */
@@ -150,9 +150,9 @@ public class TransformAffine {
     }
 
     /**
-     * Sets the e value.
+     * Sets the {@code e} value.
      *
-     * @param e the e value
+     * @param e the {@code e} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      * @throws IllegalArgumentException if {@code e} is not in range (-inf,inf)
      */
@@ -165,9 +165,9 @@ public class TransformAffine {
     }
 
     /**
-     * Sets the f value.
+     * Sets the {@code f} value.
      *
-     * @param f the f value
+     * @param f the {@code f} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      * @throws IllegalArgumentException if {@code f} is not in range (-inf,inf)
      */
@@ -180,9 +180,9 @@ public class TransformAffine {
     }
     
     /**
-     * Returns the a value.
+     * Returns the {@code a} value.
      * 
-     * @return the a value
+     * @return the {@code a} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      */
     public float getA() {
@@ -192,9 +192,9 @@ public class TransformAffine {
     }
     
     /**
-     * Returns the b value.
+     * Returns the {@code b} value.
      * 
-     * @return the b value
+     * @return the {@code b} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      */
     public float getB() {
@@ -204,9 +204,9 @@ public class TransformAffine {
     }
     
     /**
-     * Returns the c value.
+     * Returns the {@code c} value.
      * 
-     * @return the c value
+     * @return the {@code c} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      */
     public float getC() {
@@ -216,9 +216,9 @@ public class TransformAffine {
     }
     
     /**
-     * Returns the d value.
+     * Returns the {@code d} value.
      * 
-     * @return the d value
+     * @return the {@code d} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      */
     public float getD() {
@@ -228,9 +228,9 @@ public class TransformAffine {
     }
     
     /**
-     * Returns the e value.
+     * Returns the {@code e} value.
      * 
-     * @return the e value
+     * @return the {@code e} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
      */
     public float getE() {
@@ -240,9 +240,9 @@ public class TransformAffine {
     }
     
     /**
-     * Returns the f value.
+     * Returns the {@code f} value.
      * 
-     * @return the f value
+     * @return the {@code f} value
      * @throws IllegalStateException if the underlying data structure backing this object no longer exists
 
      */
@@ -252,7 +252,6 @@ public class TransformAffine {
         return transform.flame.xformAffine[transform.index*12+(preaf?5:11)];
     }
     
-
     /**
      * Returns a {@code String} representation of this {@code TransformColor}.
      * 
@@ -280,11 +279,151 @@ public class TransformAffine {
     
     /**
      * Applies this affine transformation to the given point.
+     * 
      * @param point the point to transform
      */
     public void apply(Point2D point) {
         point.set(
             point.x*getA() + point.y*getB() + getC(), 
             point.x*getD() + point.y*getE() + getF());
+    }
+    
+    /**
+     * Scales {@code a}, {@code c}, and {@code d} by {@code x} and scales
+     * {@code b}, {@code e}, and {@code f} by {@code y}.
+     * 
+     * @param x the amount to scale {@code a}, {@code c}, and {@code d}
+     * @param y the amount to scale {@code d}, {@code e}, and {@code f}
+     * @throws IllegalArgumentException if {@code x} or {@code y} is not finite
+     */
+    public void scale(float x, float y) {
+        if(!Double.isFinite(x))
+            throw new IllegalArgumentException("x is not finite: "+x);
+        if(!Double.isFinite(y))
+            throw new IllegalArgumentException("y is not finite: "+y);
+        setA(getA()*x);
+        setC(getC()*x);
+        setD(getD()*x);
+        setB(getB()*y);
+        setE(getE()*y);
+        setF(getF()*y);
+    }
+    
+    /**
+     * Scales {@code a} and {@code d} by {@code x} and scales {@code b} and
+     * {@code e} by {@code y}.
+     * 
+     * @param x the amount to scale {@code a} and {@code d}
+     * @param y the amount to scale {@code b} and {@code e}
+     * @throws IllegalArgumentException if {@code x} or {@code y} is not finite
+     */
+    public void scaleScalars(float x, float y) {
+        if(!Double.isFinite(x))
+            throw new IllegalArgumentException("x is not finite: "+x);
+        if(!Double.isFinite(y))
+            throw new IllegalArgumentException("y is not finite: "+y);
+        setA(getA()*x);
+        setD(getD()*x);
+        setB(getB()*y);
+        setE(getE()*y);
+    }
+    
+    /**
+     * Scales {@code c} by {@code x} and {@code f} by {@code y}.
+     * 
+     * @param x the amount to scale {@code c}
+     * @param y the amount to scale {@code f}
+     * @throws IllegalArgumentException if {@code x} or {@code y} is not finite
+     */
+    public void scaleTranslation(float x, float y) {
+        if(!Double.isFinite(x))
+            throw new IllegalArgumentException("x is not finite: "+x);
+        if(!Double.isFinite(y))
+            throw new IllegalArgumentException("y is not finite: "+y);
+        setC(getC()*x);
+        setF(getF()*y);
+    }
+    
+    /**
+     * Adds {@code x} to {@code c} and {@code y} to {@code f}.
+     * 
+     * @param x the amount to add to {@code c}
+     * @param y the amount to add to {@code f}
+     * @throws IllegalArgumentException if {@code x} or {@code y} is not finite
+     */
+    public void translate(float x, float y) {
+        if(!Double.isFinite(x))
+            throw new IllegalArgumentException("x is not finite: "+x);
+        if(!Double.isFinite(y))
+            throw new IllegalArgumentException("y is not finite: "+y);
+        setC(getC()+x);
+        setF(getF()+y);
+    }
+    
+    /**
+     * Rotates the affine clockwise by the specified amount.
+     * 
+     * @param angle the amount to rotate the affine in radians
+     * @throws IllegalArgumentException if {@code angle} is not finite
+     */
+    public void rotate(double angle) {
+        if(!Double.isFinite(angle))
+            throw new IllegalArgumentException("angle is not finite: "+angle);
+        angle = angle%(2*Math.PI);
+        float sin = (float)Math.sin(angle);
+        float cos = (float)Math.cos(angle);
+        float a = getA();
+        float b = getB();
+        float c = getC();
+        float d = getD();
+        float e = getE();
+        float f = getF();
+        setA(a*cos-d*sin);
+        setB(b*cos-e*sin);
+        setC(c*cos-f*sin);
+        setD(d*cos+a*sin);
+        setE(e*cos+b*sin);
+        setF(f*cos+c*sin);
+    }
+    
+    /**
+     * Rotates {@code c} and {@code f} clockwise by the specified amount.
+     * 
+     * @param angle the amount to rotate {@code c} and {@code f} in radians
+     * @throws IllegalArgumentException if {@code angle} is not finite
+     */
+    public void rotateTranslation(double angle) {
+        if(!Double.isFinite(angle))
+            throw new IllegalArgumentException("angle is not finite: "+angle);
+        angle = angle%(2*Math.PI);
+        float sin = (float)Math.sin(angle);
+        float cos = (float)Math.cos(angle);
+        float c = getC();
+        float f = getF();
+        setC(c*cos-f*sin);
+        setF(f*cos+c*sin);
+    }
+    
+    /**
+     * Rotates {@code a}, {@code b}, {@code d}, and {@code e} clockwise by the
+     * specified amount.
+     * 
+     * @param angle the amount to rotate in radians
+     * @throws IllegalArgumentException if {@code angle} is not finite
+     */
+    public void rotateScalars(double angle) {
+        if(!Double.isFinite(angle))
+            throw new IllegalArgumentException("angle is not finite: "+angle);
+        angle = angle%(2*Math.PI);
+        float sin = (float)Math.sin(angle);
+        float cos = (float)Math.cos(angle);
+        float a = getA();
+        float b = getB();
+        float d = getD();
+        float e = getE();
+        setA(a*cos-d*sin);
+        setB(b*cos-e*sin);
+        setD(d*cos+a*sin);
+        setE(e*cos+b*sin);
     }
 }

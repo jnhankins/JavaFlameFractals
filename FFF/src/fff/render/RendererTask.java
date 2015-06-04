@@ -42,15 +42,15 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * 
  * @author Jeremiah N. Hankins
  */
-public abstract class FlameRendererTask {
+public abstract class RendererTask {
     private final Sync sync = new Sync();
     
-    private final FlameRendererCallback callback;
-    private final FlameRendererSettings settings;
+    private final RendererCallback callback;
+    private final RendererSettings settings;
     
-    public FlameRendererTask( 
-            FlameRendererCallback callback,
-            FlameRendererSettings settings) {
+    public RendererTask( 
+            RendererCallback callback,
+            RendererSettings settings) {
         if (callback == null)
             throw new IllegalArgumentException("callback = null");
         if (settings == null)
@@ -77,23 +77,23 @@ public abstract class FlameRendererTask {
     public abstract Flame getNextFlame();
     
     /**
-     * Returns the {@link FlameRendererCallback} object which allows the 
+     * Returns the {@link RendererCallback} object which allows the 
      * {@link FlameRenderEngine} that is working on this task to communicate
      * progress and results asynchronously to the rest of the program.
      * 
-     * @return the {@code FlameRendererCallback} for this task
+     * @return the {@code RendererCallback} for this task
      */
-    public FlameRendererCallback getCallback() {
+    public RendererCallback getCallback() {
         return callback;
     }
     
     /**
-     * Returns the {@link FlameRendererSettings} that should be used to render
+     * Returns the {@link RendererSettings} that should be used to render
      * all {@link Flame} instances returned by {@link #getNextFlame()}.
      * 
-     * @return the {@code FlameRendererSettings} for this task
+     * @return the {@code RendererSettings} for this task
      */
-    public FlameRendererSettings getSettings() {
+    public RendererSettings getSettings() {
         return settings;
     }
     

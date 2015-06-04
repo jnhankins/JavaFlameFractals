@@ -34,7 +34,7 @@ import java.awt.image.BufferedImage;
  * 
  * @author Jeremiah N. Hankins
  */
-public interface FlameRendererCallback {
+public interface RendererCallback {
     /**
      * Called asynchronously by a {@link FlameRenderer} to deliver progress
      * updates and final results while rendering a flame image.
@@ -48,7 +48,7 @@ public interface FlameRendererCallback {
      * @param isFinished {@code true} if the image is finished, {@code false} if work on the image is ongoing
      */
     public void flameRendererCallback(
-            FlameRendererTask task, 
+            RendererTask task, 
             Flame flame, 
             BufferedImage image, 
             double quality, 

@@ -28,26 +28,26 @@ package fff.render;
 import fff.flame.Flame;
 
 /**
- * A {@link FlameRendererTask} implementation for a rendering single flames.
+ * A {@link RendererTask} implementation for a rendering single flames.
  * 
  * @author Jeremiah N. Hankins
  */
-public class FlameRendererTaskSingle extends FlameRendererTask {
+public class RendererTaskSingle extends RendererTask {
     private Flame flame;
 
     /**
-     * Constructs a new {@code FlameRendererTask} for rendering the given
+     * Constructs a new {@code RendererTask} for rendering the given
      * {@link Flame flame} with the given
-     * {@link FlameRendererSettings render engine settings} and
-     * {@link FlameRendererCallback callback function}.
+     * {@link RendererSettings render engine settings} and
+     * {@link RendererCallback callback function}.
      * 
      * @param settings the render engine settings
      * @param callback the callback function
      * @param flame the flame
      */
-    public FlameRendererTaskSingle(
-            FlameRendererCallback callback,
-            FlameRendererSettings settings, 
+    public RendererTaskSingle(
+            RendererCallback callback,
+            RendererSettings settings, 
             Flame flame) {
         super(callback, settings);
         this.flame = flame;

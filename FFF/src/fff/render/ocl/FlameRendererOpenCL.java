@@ -28,9 +28,9 @@ package fff.render.ocl;
 import fff.flame.Flame;
 import fff.flame.VariationDefinition;
 import fff.render.FlameRenderer;
-import fff.render.FlameRendererCallback;
-import fff.render.FlameRendererSettings;
-import fff.render.FlameRendererTask;
+import fff.render.RendererCallback;
+import fff.render.RendererSettings;
+import fff.render.RendererTask;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.FileNotFoundException;
@@ -127,10 +127,10 @@ public class FlameRendererOpenCL extends FlameRenderer {
     private long preUpdateTime;
     
     // Current flame, settings, and listeners
-    private FlameRendererTask task;
+    private RendererTask task;
     private Flame flame;
-    private FlameRendererSettings settings;
-    private FlameRendererCallback callback;
+    private RendererSettings settings;
+    private RendererCallback callback;
     
     static {
         // Enable exceptions
@@ -432,7 +432,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
     }
     
     @Override
-    protected void renderNextFlame(FlameRendererTask task) {
+    protected void renderNextFlame(RendererTask task) {
         // Store the task
         this.task = task;
         callback = task.getCallback();
@@ -504,12 +504,8 @@ public class FlameRendererOpenCL extends FlameRenderer {
         // Store a copy of the isAccerlated flag on the stack, so that if the
         // flag changes mid render, an error does not occur.
         boolean isAccel = isBatchAccelerated;
-        //
-        double maxBatchTime = 0;
-        if (updatesPerSec > 0)
-            maxBatchTime = 1/updatesPerSec;
-        if (maxBatchTimeSec > 0 && maxBatchTimeSec < maxBatchTime)
-            maxBatchTime = maxBatchTimeSec;
+        // Get the maximum batch time
+        double maxBatchTime = calcMaxBatchTimeSec();
         
         // Perform the main ploting cycle
         while ((!task.isCancelled()|| forcePreview) && currQuality < maxQuality && elapTime < maxTime) {

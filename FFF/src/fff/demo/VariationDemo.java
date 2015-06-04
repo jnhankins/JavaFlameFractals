@@ -26,18 +26,15 @@
 package fff.demo;
 
 import fff.flame.Flame;
+import fff.flame.FlameFactory;
 import fff.flame.Transform;
 import fff.flame.VariationDefinition;
+import fff.render.BasicCallback;
 import fff.render.FlameRenderer;
-import fff.render.FlameRendererCallback;
-import fff.render.FlameRendererSettings;
-import fff.render.FlameRendererTask;
-import fff.render.FlameRendererTaskSingle;
+import fff.render.RendererCallback;
+import fff.render.RendererSettings;
+import fff.render.RendererTaskSingle;
 import fff.render.ocl.FlameRendererOpenCL;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileObject;
@@ -53,11 +50,6 @@ import javax.tools.JavaFileObject;
 public class VariationDemo {
     
     public static void main(String[] args) {
-        
-        // The destination file name
-        final String fileName = "VariationDemo.png";
-        
-        
         // Create the new variation definition
         VariationDefinition sincVariation = null;
         try {
@@ -81,11 +73,10 @@ public class VariationDemo {
             System.exit(0);
         }
         
-        
         // Catch exceptions that occur so they can be displayed for debugging
         try {
             // Create the flame based on the sierpinski triangle
-            Flame flame = Flame.newSierpinski();
+            Flame flame = FlameFactory.newSierpinskiTriangle();
             
             // Add a new transform using the sinc variation
             Transform xform = flame.addTransform();
@@ -108,7 +99,7 @@ public class VariationDemo {
             System.out.println(renderer+"\n");
 
             // Create the image settings
-            FlameRendererSettings settings = new FlameRendererSettings();
+            RendererSettings settings = new RendererSettings();
             settings.setWidth(1920);
             settings.setHeight(1080);
             settings.setMaxQuality(200);
@@ -116,39 +107,12 @@ public class VariationDemo {
             // Display the image's settings
             System.out.println(settings+"\n");
 
-            // Create the callback function
-            FlameRendererCallback callback = new FlameRendererCallback() {
-                // This method is called asynchonously by one of the flame 
-                // renderer's interal threads after the enqueueTask() method
-                // has been caled
-                @Override
-                public void flameRendererCallback(FlameRendererTask task, Flame flame, BufferedImage image, double quality, double points, double elapTime, boolean isFinished) {
-                    
-                    // Display progress updates
-                    System.out.println(String.format("Drawn %.2fM dots in %.2f sec at %.2fM dots/sec for quality of %.2f.", points/1e7, elapTime, points/(1e7*elapTime), quality));
-                    
-                    // If the image is completed...
-                    if (isFinished) {
-                        
-                        // Try to write the image as a PNG file
-                        File file = new File(fileName);
-                        try {
-                            System.out.println("\nWriting PNG image file: "+file.getCanonicalPath());
-                            ImageIO.write(image, "png", file);
-                        } catch (IOException ex) {
-                            ex.printStackTrace(System.err);
-                            System.exit(0);
-                        }
-                        
-                        // Rendering is complete, tell the program to exit
-                        System.out.println("\nDone");
-                    }
-                };
-            };
+            // Create the callback function, ouputs to VariationDemo.png
+            RendererCallback callback = new BasicCallback("VariationDemo");
 
             // Create a render task to render the flame with the given settings and 
             // output listener
-            FlameRendererTaskSingle task = new FlameRendererTaskSingle(callback, settings, flame);
+            RendererTaskSingle task = new RendererTaskSingle(callback, settings, flame);
 
             // Pass the rendering task to the flame renderer renderer
             // Work will begin immediatly
@@ -156,10 +120,19 @@ public class VariationDemo {
             
             // Tell the renderer to shutdown when the task is complete
             renderer.shutdown();
+            
+            // Wait for the task to comple and for the renderer to shutdown
+            renderer.awaitTermination(Long.MAX_VALUE);
+            
+            // Rendering is complete
+            System.out.println("\nDone");
         
         } catch (Exception ex) {
+            
             // Print any exceptions that have been thrown to the err stream
             ex.printStackTrace(System.err);
+            
+            // Invoke the renderer's shutdown hook
             System.exit(0);
         }
     }

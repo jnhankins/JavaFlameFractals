@@ -32,7 +32,7 @@ import java.io.Serializable;
  * 
  * @author Jeremiah N. Hankins
  */
-public class FlameRendererSettings implements Serializable {
+public class RendererSettings implements Serializable {
     // Image Resolution
     private int width;
     private int height;
@@ -53,7 +53,7 @@ public class FlameRendererSettings implements Serializable {
     /**
      * Constructs a new {@code FlameRenderSettings} with default values.
      */
-    public FlameRendererSettings() {
+    public RendererSettings() {
         width = 1280;
         height = 720;
         maxTime = 60.0; // 60 secibds
@@ -75,18 +75,18 @@ public class FlameRendererSettings implements Serializable {
      * @param settings the {@code FlameRenderSettings} to copy
      * @throws IllegalArgumentException if {@code settings} is {@code null}
      */
-    public FlameRendererSettings(FlameRendererSettings settings) {
+    public RendererSettings(RendererSettings settings) {
         set(settings);
     }
     
     /**
-     * Copies the given {@code FlameRendererSettings}.
+     * Copies the given {@code RendererSettings}.
      * 
-     * @param settings the {@code FlameRendererSettings} to copy
-     * @return this {@code FlameRendererSettings} object
+     * @param settings the {@code RendererSettings} to copy
+     * @return this {@code RendererSettings} object
      * @throws IllegalArgumentException if {@code settings} is {@code null}
      */
-    public FlameRendererSettings set(FlameRendererSettings settings) {
+    public RendererSettings set(RendererSettings settings) {
         if (settings == null)
             throw new IllegalArgumentException("settings is null");
         width = settings.width;
@@ -108,10 +108,10 @@ public class FlameRendererSettings implements Serializable {
      * Sets the width of the output image in pixels.
      * 
      * @param width the image width
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      * @throws IllegalArgumentException if {@code width} is not in the range [1,inf)
      */
-    public FlameRendererSettings setWidth(int width) {
+    public RendererSettings setWidth(int width) {
         if (!(1 <= width))
             throw new IllegalArgumentException("width is not in the range [1,inf): "+width);
         this.width = width;
@@ -122,10 +122,10 @@ public class FlameRendererSettings implements Serializable {
      * Sets the height of the output image in pixels.
      * 
      * @param height the image height
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      * @throws IllegalArgumentException if {@code height} is not in the range [1,inf)
      */
-    public FlameRendererSettings setHeight(int height) {
+    public RendererSettings setHeight(int height) {
         if (!(1 <= height))
             throw new IllegalArgumentException("height is not in the range [1,inf): "+height);
         this.height = height;
@@ -137,11 +137,11 @@ public class FlameRendererSettings implements Serializable {
      * 
      * @param width the image width
      * @param height the image height
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      * @throws IllegalArgumentException if {@code width} is not in the range [1,inf)
      * @throws IllegalArgumentException if {@code height} is not in the range [1,inf)
      */
-    public FlameRendererSettings setSize(int width, int height) {
+    public RendererSettings setSize(int width, int height) {
         if (!(1 <= width))
             throw new IllegalArgumentException("width is not in the range [1,inf): "+width);
         if (!(1 <= height))
@@ -155,10 +155,10 @@ public class FlameRendererSettings implements Serializable {
      * Sets the maximum time in seconds spent rendering a flame.
      * 
      * @param maxTime the maximum rendering time in seconds
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      * @throws IllegalArgumentException if {@code maxTime} is not in the range [1,inf)
      */
-    public FlameRendererSettings setMaxTime(double maxTime) {
+    public RendererSettings setMaxTime(double maxTime) {
         if (!(0 < maxTime && maxTime < Double.POSITIVE_INFINITY))
             throw new IllegalArgumentException("maxTime is not in the range (0,inf): "+maxTime);
         this.maxTime = maxTime;
@@ -171,10 +171,10 @@ public class FlameRendererSettings implements Serializable {
      * the number of unique pixels to which dots have been plotted.
      *
      * @param maxQuality the maximum image quality
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      * @throws IllegalArgumentException if {@code maxQuality} is not in the range (0,inf)
      */
-    public FlameRendererSettings setMaxQuality(double maxQuality) {
+    public RendererSettings setMaxQuality(double maxQuality) {
         if (!(0 < maxQuality && maxQuality < Double.POSITIVE_INFINITY))
             throw new IllegalArgumentException("maxQuality is not in the range (0,inf): "+maxQuality);
         this.maxQuality = maxQuality;
@@ -186,9 +186,9 @@ public class FlameRendererSettings implements Serializable {
      * variations should be used.
      * 
      * @param useVariations {@code true} if non-linear variations will be used
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      */
-    public FlameRendererSettings setUseVariations(boolean useVariations) {
+    public RendererSettings setUseVariations(boolean useVariations) {
         this.useVariations = useVariations;
         return this;
     }
@@ -198,9 +198,9 @@ public class FlameRendererSettings implements Serializable {
      * variation affines should be used.
      * 
      * @param usePostAffines {@code true} if post non-linear variation affines will be used
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      */
-    public FlameRendererSettings setUsePostAffines(boolean usePostAffines) {
+    public RendererSettings setUsePostAffines(boolean usePostAffines) {
         this.usePostAffines = usePostAffines;
         return this;
     }
@@ -210,9 +210,9 @@ public class FlameRendererSettings implements Serializable {
      * should be used.
      * 
      * @param useFinalTransform {@code true} if final transforms should be used
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      */
-    public FlameRendererSettings setUseFinalTransform(boolean useFinalTransform) {
+    public RendererSettings setUseFinalTransform(boolean useFinalTransform) {
         this.useFinalTransform = useFinalTransform;
         return this;
     }
@@ -222,9 +222,9 @@ public class FlameRendererSettings implements Serializable {
      * used.
      *
      * @param useJitter {@code true} if final transforms should be used
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      */
-    public FlameRendererSettings setUseJitter(boolean useJitter) {
+    public RendererSettings setUseJitter(boolean useJitter) {
         this.useJitter = useJitter;
         return this;
     }
@@ -234,9 +234,9 @@ public class FlameRendererSettings implements Serializable {
      * density-estimation blurring.
      * 
      * @param useBlur {@code true} if density-estimation blurring will be used
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      */
-    public FlameRendererSettings setUseBlur(boolean useBlur) {
+    public RendererSettings setUseBlur(boolean useBlur) {
         this.useBlur = useBlur;
         return this;
     }
@@ -246,10 +246,10 @@ public class FlameRendererSettings implements Serializable {
      * be applied to to low-density portions of the image.
      * 
      * @param blurAlpha the blur-kernel aggressiveness coefficient 
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      * @throws IllegalArgumentException if {@code blurAlpha} is not in the range [0, inf)
      */
-    public FlameRendererSettings setBlurAlpha(float blurAlpha) {
+    public RendererSettings setBlurAlpha(float blurAlpha) {
         if (!(0 <= blurAlpha && blurAlpha < Float.POSITIVE_INFINITY))
             throw new IllegalArgumentException("blurAlpha is not in the range [0,inf): "+blurAlpha);
         this.blurAlpha = blurAlpha;
@@ -260,10 +260,10 @@ public class FlameRendererSettings implements Serializable {
      * Sets the minimum blur-kernel width.
      * 
      * @param blurMinRadius the minimum blur-kernel width
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      * @throws IllegalArgumentException if {@code blurMinRadius} is not in the range [0, {@link #getBlurMaxRadius()}]
      */
-    public FlameRendererSettings setBlurMinRadius(float blurMinRadius) {
+    public RendererSettings setBlurMinRadius(float blurMinRadius) {
         if (!(0 <= blurMinRadius && blurMinRadius <= blurMaxRadius))
             throw new IllegalArgumentException("blurMinRadius is not in the range [0,blurMaxRadius]: "+blurMinRadius);
         this.blurMinRadius = blurMinRadius;
@@ -274,10 +274,10 @@ public class FlameRendererSettings implements Serializable {
      * Sets the maximum blur-kernel width.
      * 
      * @param blurMaxRadius the maximum blur-kernel width
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      * @throws IllegalArgumentException if {@code blurMaxRadius} is not in the range [{@link #getBlurMinRadius()},inf)
      */
-    public FlameRendererSettings setBlurMaxRadius(float blurMaxRadius) {
+    public RendererSettings setBlurMaxRadius(float blurMaxRadius) {
         if (!(blurMinRadius <= blurMaxRadius && blurMaxRadius < Float.POSITIVE_INFINITY))
             throw new IllegalArgumentException("blurMaxRadius is not in the range [blurMinRadius,inf): "+blurMaxRadius);
         this.blurMaxRadius = blurMaxRadius;
@@ -289,11 +289,11 @@ public class FlameRendererSettings implements Serializable {
      * 
      * @param blurMinRadius the minimum blur-kernel width
      * @param blurMaxRadius the maximum blur-kernel width
-     * @return this {@code FlameRendererSettings} object
+     * @return this {@code RendererSettings} object
      * @throws IllegalArgumentException if {@code blurMinRadius} or {@code blurMaxRadius} is not in the range [0,inf)
      * @throws IllegalArgumentException if {@code blurMinRadius} is not less than or equal to {@code blurMaxRadius}
      */
-    public FlameRendererSettings setBlurMinAndMaxRadius(float blurMinRadius, float blurMaxRadius) {
+    public RendererSettings setBlurMinAndMaxRadius(float blurMinRadius, float blurMaxRadius) {
         if (!(0 <= blurMinRadius && blurMinRadius < Float.POSITIVE_INFINITY))
             throw new IllegalArgumentException("blurMinRadius is not in the range [0,inf): "+blurMinRadius);
         if (!(0 <= blurMaxRadius && blurMaxRadius < Float.POSITIVE_INFINITY))

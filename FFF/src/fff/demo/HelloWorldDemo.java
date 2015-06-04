@@ -25,14 +25,10 @@
 
 package fff.demo;
 
-import fff.flame.Flame;
+import fff.flame.FlameFactory;
 import fff.render.*;
 import fff.render.ocl.FlameRendererOpenCL;
 import fff.render.ocl.FlameRendererOpenCL.DeviceType;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
 
 /**
  * HelloWorldDemo provides a main method which renders a
@@ -42,33 +38,20 @@ import javax.imageio.ImageIO;
  * 
  * @author Jeremiah N. Hankins
  */
-public class HelloWorldDemo implements FlameRendererCallback {
+public class HelloWorldDemo {
     public static void main(String[] args) {
         // Create the renderer
         FlameRenderer renderer = new FlameRendererOpenCL(DeviceType.ALL);
         // Add a new flame rendering task to the queue
         renderer.getQueue().add(
-            new FlameRendererTaskSingle( // That renders a single flame
-                new HelloWorldDemo(),        // Using HelloWorldDemo's callback function
-                new FlameRendererSettings(), // Using default image settings
-                Flame.newSierpinski()        // Rendering a Sierpinski Triangle
+            new RendererTaskSingle( // That renders a single flame
+                new BasicCallback("HelloWorldDemo"), // Using the basic callback function
+                new RendererSettings(),              // Using default image settings
+                FlameFactory.newSierpinskiTriangle() // Rendering a Sierpinski Triangle
             ));
         // Begin rendering
         renderer.start();
         // Shutdown when finished
         renderer.shutdown();
     }
-    
-    @Override
-    public void flameRendererCallback(FlameRendererTask task, Flame flame, BufferedImage image, double quality, double points, double elapTime, boolean isFinished) {
-        // When the image is finished, save it to file HelloWorldDemo.png
-        if (isFinished) {
-            try {
-                ImageIO.write(image, "png", new File("HelloWorldDemo.png"));
-            } catch (IOException ex) {
-                ex.printStackTrace(System.err);
-                System.exit(0);
-            }
-        }
-    };
 }

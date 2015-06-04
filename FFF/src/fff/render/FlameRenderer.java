@@ -33,7 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * A flame image rendering engine.
  * <p>
- * Rendering {@link FlameRendererTask tasks} consist of an object containing 
+ * Rendering {@link RendererTask tasks} consist of an object containing 
  * {@link FlameRendererSettings settings}, a 
  * {@link FlameRendererCallback callback function}, and a sequence of 
  * {@link Flame} instances. Tasks are passed to a {@code FlameRenderer} for
@@ -104,12 +104,12 @@ public abstract class FlameRenderer {
     /** 
      * Queue of tasks.
      */
-    private final BlockingQueue<FlameRendererTask> queue = new LinkedBlockingQueue();
+    private final BlockingQueue<RendererTask> queue = new LinkedBlockingQueue();
     
     /**
      * Task most recently dequeued for rendering.
      */
-    private FlameRendererTask task;
+    private RendererTask task;
     
     /**
      * Main thread for dequeuing tasks and passing them to the flame renderer.
@@ -117,7 +117,7 @@ public abstract class FlameRenderer {
     private final Thread renderLoop = new Thread(new RenderLoop(), "Flame Engine Render Loop");
     
     /**
-     * 
+     * Update rate. If set to {@code 0} updates will not be generated.
      */
     protected double updatesPerSec = 0;
     
@@ -146,7 +146,7 @@ public abstract class FlameRenderer {
      * 
      * @return the task queue for the {@code FlameRenderEngine}
      */
-    public BlockingQueue<FlameRendererTask> getQueue() {
+    public BlockingQueue<RendererTask> getQueue() {
         return queue;
     }
 
@@ -158,7 +158,7 @@ public abstract class FlameRenderer {
      * 
      * @return the last task dequeued by the {@code FlameRenderEngine}
      */
-    public FlameRendererTask getTask() {
+    public RendererTask getTask() {
         return task;
     }
     
@@ -405,6 +405,29 @@ public abstract class FlameRenderer {
     }
     
     /**
+     * Returns the maximum time the renderer should spend working on a single
+     * batch accounting for the update rate.
+     * <p>
+     * If either {@link #updatesPerSec} or {@link #maxBatchTimeSec} is non-zero,
+     * then of the two values, {@code 1/updatesPerSec} and
+     * {@code maxBatchTimeSec}, the smaller value which is both positive and
+     * normal is returned. If both {@code #updatesPerSec} and
+     * {@code #maxBatchTimeSec} is zero, then zero is returned.
+     * 
+     * @return the maximum batch time in seconds
+     */
+    protected double calcMaxBatchTimeSec() {
+        double maxBatchTime = Double.MAX_VALUE;
+        if (updatesPerSec > 0)
+            maxBatchTime = 1/updatesPerSec;
+        if (maxBatchTimeSec < maxBatchTime)
+            maxBatchTime = maxBatchTimeSec;
+        if (maxBatchTime == Double.MAX_VALUE)
+            maxBatchTime = 0;
+        return maxBatchTime;
+    }
+    
+    /**
      * Main render loop thread. This thread takes tasks from the queue and
      * passes them to the {@link #renderNextFlame(fff.render3.FlameTask) rendernextFlame}
      * method. If the queue is empty, the thread will wait for either a task to
@@ -498,5 +521,5 @@ public abstract class FlameRenderer {
      * 
      * @param task the task
      */
-    protected abstract void renderNextFlame(FlameRendererTask task);
+    protected abstract void renderNextFlame(RendererTask task);
 }
