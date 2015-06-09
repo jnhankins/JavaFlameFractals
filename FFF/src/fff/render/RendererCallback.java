@@ -47,7 +47,7 @@ public interface RendererCallback {
      * @param elapsedTime the amount of time in seconds spent rendering the image
      * @param isFinished {@code true} if the image is finished, {@code false} if work on the image is ongoing
      */
-    public void flameRendererCallback(
+    public void rendererCallback(
             RendererTask task, 
             Flame flame, 
             BufferedImage image, 

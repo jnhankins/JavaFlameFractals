@@ -33,12 +33,12 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * A flame image rendering engine.
  * <p>
- * Rendering {@link RendererTask tasks} consist of an object containing 
- * {@link FlameRendererSettings settings}, a 
- * {@link FlameRendererCallback callback function}, and a sequence of 
- * {@link Flame} instances. Tasks are passed to a {@code FlameRenderer} for
- * rendering by adding them into the renderer's task queue which can be 
- * retrieved via {@link #getQueue()}.
+ * Rendering {@link RendererTask tasks} consist of an object containing
+ * {@link RendererSettings settings}, a
+ * {@link RendererCallback callback function}, and a sequence of {@link fff.flame.Flame}
+ * instances. Tasks are passed to a {@code FlameRenderer} for rendering by
+ * adding them into the renderer's task queue which can be retrieved via
+ * {@link #getQueue()}.
  * <p>
  * Work on the first task will not begin until the {@link #start()} method has 
  * been invoked. Once the renderer has been started, an internal thread will
@@ -47,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * in the queue, the internal thread will block until a task becomes available.
  * The task most recently dequeued for rendering can be retrieved via 
  * {@link #getTask()}. Any task can be cancelled at any time by invoking its
- * {@link FlameRendererTask#cancel(boolean) cancel()} method.
+ * {@link RendererTask#cancel(boolean) cancel()} method.
  * <p>
  * Use {@link #shutdown()} method to shutdown the renderer and its threads after
  * all tasks in the queue have been completed or cancelled and the queue is 
@@ -142,9 +142,9 @@ public abstract class FlameRenderer {
     protected double maxBatchTimeSec = 1;
     
     /**
-     * Returns the task queue for the {@code FlameRenderEngine}.
+     * Returns the task queue for the {@code FlameRenderer}.
      * 
-     * @return the task queue for the {@code FlameRenderEngine}
+     * @return the task queue for the {@code FlameRenderer}
      */
     public BlockingQueue<RendererTask> getQueue() {
         return queue;
@@ -152,11 +152,11 @@ public abstract class FlameRenderer {
 
     /**
      * Returns the task that was most recently dequeued from the front of the
-     * task queue by the {@code FlameRenderEngine}. If no tasks have been
-     * dequeued by the {@code FlameRenderEngine}, then this method returns
+     * task queue by the {@code FlameRenderer}. If no tasks have been
+     * dequeued by the {@code FlameRenderer}, then this method returns
      * {@code null}.
      * 
-     * @return the last task dequeued by the {@code FlameRenderEngine}
+     * @return the last task dequeued by the {@code FlameRenderer}
      */
     public RendererTask getTask() {
         return task;
@@ -184,7 +184,7 @@ public abstract class FlameRenderer {
      * completed or cancelled. Invocation has no additional effect if already
      * shut down.
      * <p>
-     * This method does not block. If needed, use {@link #awaitTermination()} 
+     * This method does not block. If needed, use {@link #awaitTermination(long)} 
      * to wait until the shutdown has completed.
      */
     public void shutdown() {
@@ -203,7 +203,7 @@ public abstract class FlameRenderer {
      * current task and ignoring remaining tasks the queue. Invocation has no
      * additional effect if already shut down.
      * <p>
-     * This method does not block. If needed, use {@link #awaitTermination()} 
+     * This method does not block. If needed, use {@link #awaitTermination(long)} 
      * to wait until the shutdown has completed.
      */
     public void shutdownNow() {
@@ -343,8 +343,8 @@ public abstract class FlameRenderer {
      * The maximum time that can pass between checks is limited by the
      * {@link #setUpdatesPerSec(double) update rate}, the
      * {@link #setMaxBatchTimeSec(double) maximum batch time}, the 
-     * {@link FlameRendererSettings#setMaxQuality(double) maximum quality}, and
-     * the {@link FlameRendererSettings#setMaxTime(double) maximum render time},
+     * {@link RendererSettings#setMaxQuality(double) maximum quality}, and
+     * the {@link RendererSettings#setMaxTime(double) maximum render time},
      * whichever comes first.
      * <p>When this flag is set, the {@code FlameRenderer} may reduce the number
      * of updates per second by as much as half of what the 
@@ -429,7 +429,7 @@ public abstract class FlameRenderer {
     
     /**
      * Main render loop thread. This thread takes tasks from the queue and
-     * passes them to the {@link #renderNextFlame(fff.render3.FlameTask) rendernextFlame}
+     * passes them to the {@link #renderNextFlame(fff.render3.RendererTask) rendernextFlame}
      * method. If the queue is empty, the thread will wait for either a task to
      * be enqueued or for one of the {@code shutdown} method's to be called.
      */
@@ -506,18 +506,18 @@ public abstract class FlameRenderer {
     
     /**
      * Renders the next flame returned by the given the 
-     * {@link FlameTask#getNextFlame() getNextFlame} method of the given task
+     * {@link RendererTask#getNextFlame() getNextFlame} method of the given task
      * and block until the flame image is complete or canceled.
      * <p>
      * Implementations of this method should use the {@code FlameSettings} 
-     * returned by {@link FlameTask#getSettings()} to render the flame image and
+     * returned by {@link RendererTask#getSettings()} to render the flame image and
      * use the methods provided by the {@code FlameCallback} returned by 
-     * {@link FlameTask#getCallback()} to asynchronously relay progress updates
+     * {@link RendererTask#getCallback()} to asynchronously relay progress updates
      * and results to the rest of the application.
      * <p>
      * Implementations of this method are not required to call 
-     * {@link FlameTask#hasNextFlame()} to ensure that calling
-     * {@link FlameTask#getNextFlame()} will not result in an exception.
+     * {@link RendererTask#hasNextFlame()} to ensure that calling
+     * {@link RendererTask#getNextFlame()} will not result in an exception.
      * 
      * @param task the task
      */

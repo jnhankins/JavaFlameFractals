@@ -514,7 +514,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
                 // If not generating update image...
                 if (!updateImages) {
                     // Send a progress update callback without an image
-                    callback.flameRendererCallback(task, flame, null, currQuality, numIter*workSize, elapTime, false);
+                    callback.rendererCallback(task, flame, null, currQuality, numIter*workSize, elapTime, false);
                     // Calculate the 'previous' update time
                     preUpdateTime = Math.max(preUpdateTime+updateInterval, currTime-updateInterval);
                 } else if (numIter >= 20) {
@@ -1048,7 +1048,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
         // Determine the elapsed time (since work began on this image)
         double elapTime = (System.nanoTime()-startTime)*1e-9;
         // Alert the image listeners
-        callback.flameRendererCallback(task, flame, frontImage, quality, points, elapTime, isFinished);
+        callback.rendererCallback(task, flame, frontImage, quality, points, elapTime, isFinished);
     }
     
     private static cl_platform_id[] getAllPlatforms() {

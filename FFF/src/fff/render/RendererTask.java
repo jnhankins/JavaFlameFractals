@@ -78,7 +78,7 @@ public abstract class RendererTask {
     
     /**
      * Returns the {@link RendererCallback} object which allows the 
-     * {@link FlameRenderEngine} that is working on this task to communicate
+     * {@link FlameRenderer} that is working on this task to communicate
      * progress and results asynchronously to the rest of the program.
      * 
      * @return the {@code RendererCallback} for this task
@@ -121,7 +121,7 @@ public abstract class RendererTask {
      * Attempts to cancel the task. This attempt will fail if the task has
      * already completed or has already been cancelled. If the task has already
      * started, then the {@code mayCancleIfStarted} parameter determines
-     * whether the {@link FlameRenderEngine} working on this task should attempt
+     * whether the {@link FlameRenderer} working on this task should attempt
      * to stop the task. If the task is successfully cancelled, then threads
      * blocked by this task's block methods will become unblocked and resume.
      * 

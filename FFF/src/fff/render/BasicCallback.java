@@ -119,7 +119,7 @@ public class BasicCallback implements RendererCallback {
     }
     
     @Override
-    public void flameRendererCallback(RendererTask task, Flame flame, BufferedImage image, double quality, double points, double elapTime, boolean isFinished) {
+    public void rendererCallback(RendererTask task, Flame flame, BufferedImage image, double quality, double points, double elapTime, boolean isFinished) {
         // Display progress updates
         if (printStream != null)
             printStream.println(String.format("Drawn %.2fM dots in %.2f sec at %.2fM dots/sec for quality of %.2f.", points/1e7, elapTime, points/(1e7*elapTime), quality));
