@@ -499,7 +499,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
         clSetKernelArg(plotKernel, 15, Sizeof.cl_int, batchPointer);
         
         // Store a copy of the isAccerlated flag on the stack, so that if the
-        // flag changes mid renderFlame, an error does not occur.
+        // flag changes mid render, an error does not occur.
         boolean isAccel = isBatchAccelerated;
         // Get the maximum batch time
         double maxBatchTime = calcMaxBatchTimeSec();

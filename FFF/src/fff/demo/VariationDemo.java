@@ -110,8 +110,8 @@ public class VariationDemo {
             // Create the callback function, ouputs to VariationDemo.png
             RendererCallback callback = new BasicCallback("VariationDemo");
 
-            // Create a renderFlame task to renderFlame the flame with the given settings and 
-            // output listener
+            // Create a task to render the flame with the given settings and
+            // callback function
             RendererTaskSingle task = new RendererTaskSingle(callback, settings, flame);
 
             // Pass the rendering task to the flame renderer renderer

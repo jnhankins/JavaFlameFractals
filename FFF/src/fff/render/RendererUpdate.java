@@ -51,7 +51,7 @@ public class RendererUpdate {
     protected Flame flame; 
 
     /**
-     * The current image. May be {@code null} if {@link #updateImages} is
+     * The current image. May be {@code null} if {@link FlameRenderer#getUpdateImages()} is
      * {@code false}.
      */
     protected BufferedImage image;

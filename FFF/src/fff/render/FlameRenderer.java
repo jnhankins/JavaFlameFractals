@@ -55,27 +55,27 @@ import java.util.concurrent.locks.ReentrantLock;
  * {@link RendererTask#cancel(boolean) cancel()} method.
  * <p>
  * Use {@link #shutdown()} method to shutdown the renderer and its threads after
- * all tasks in the queue have been completed or cancelled and the queue is 
- * empty, or use {@link #shutdownNow()} to cancel the current task is one is 
+ * all tasks in the queue have been completed or cancelled and the queue is
+ * empty, or use {@link #shutdownNow()} to cancel the current task is one is
  * currently underway and to ignore the remaining tasks in the queue so that
- * resources can be freed as quickly as possible. Use 
+ * resources can be freed as quickly as possible. Use
  * {@link #awaitTermination(long)} to cause a thread to block and wait until the
  * shutdown procedure has completed. To determine the current status of the
  * renderer query the {@link #isRunning()}, {@link #isShutdown()}, and
  * {@link #isTerminated()} methods.
  * <p>
- Since work on individual flame images can be very time consuming, 
- communication between the renderer and the rest of the program is done
- asynchronously through the callback functions contained within the individual
- renderFlame tasks. If the renderer's {@link #setUpdatesPerSec(double) update rate}
- * is set to a positive value, then the renderer will use the call back function
- * to deliver progress update information (e.g. time elapsed, percent complete,
- * etc..). If the {@link #setUpdateImages(boolean) update-images} flag is
- * set, then the progress updates will contain a preview of what the flame image
- * looks like so far, though this entails extra computation and will increase
- * the total amount of time needed to complete the final image. The final image
- * is also relayed through the callback function using the same method as the
- * progress updates.
+ * Since work on individual flame images can be very time consuming,
+ * communication between the renderer and the rest of the program is done
+ * asynchronously through the callback functions contained within the individual
+ * renderer tasks. If the renderer's
+ * {@link #setUpdatesPerSec(double) update rate} is set to a positive value,
+ * then the renderer will use the call back function to deliver progress update
+ * information (e.g. time elapsed, percent complete, etc..). If the
+ * {@link #setUpdateImages(boolean) update-images} flag is set, then the
+ * progress updates will contain a preview of what the flame image looks like so
+ * far, though this entails extra computation and will increase the total amount
+ * of time needed to complete the final image. The final image is also relayed
+ * through the callback function using the same method as the progress updates.
  * <p>
  * {@code FlameRenderer} is designed for use across multiple threads and its
  * methods are synchronized where appropriate. All methods are non-blocking 
@@ -372,7 +372,7 @@ public abstract class FlameRenderer {
      * {@link #setUpdatesPerSec(double) update rate}, the
      * {@link #setMaxBatchTimeSec(double) maximum batch time}, the 
      * {@link RendererSettings#setMaxQuality(double) maximum quality}, and
-     * the {@link RendererSettings#setMaxTime(double) maximum renderFlame time},
+     * the {@link RendererSettings#setMaxTime(double) maximum render time},
      * whichever comes first.
      * <p>When this flag is set, the {@code FlameRenderer} may reduce the number
      * of updates per second by as much as half of what the 
@@ -463,7 +463,7 @@ public abstract class FlameRenderer {
      * @param flame the flame being rendered
      * @param image the current image of the flame
      * @param quality the quality of the image
-     * @param points the number of points plotted to renderFlame the image
+     * @param points the number of points plotted to render the image
      * @param elapsedTime the amount of time in seconds spent rendering the image
      * @param isFinished {@code true} if the image is finished, {@code false} if work on the image is ongoing
      */
@@ -501,7 +501,7 @@ public abstract class FlameRenderer {
     
     /**
      * Main render loop thread. This thread dequeues takes from the queue and
-     * passes their flames one at a time to the {@link #renderFlame(RendererTask, Flame)}
+     * passes their flames one at a time to the {@link #renderNextFlame(RendererTask)}
      * method. If the queue is empty, the thread will wait for either a task to
      * be enqueued or for one of the {@code shutdown()} method's to be called.
      */

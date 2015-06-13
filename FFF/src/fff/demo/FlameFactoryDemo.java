@@ -70,7 +70,7 @@ public class FlameFactoryDemo {
         renderer.setUpdatesPerSec(10);
         // Start the renderer
         renderer.start();
-        // Create the renderFlame settings
+        // Create the renderer settings
         RendererSettings settings = new RendererSettings();
         // For every flame...
         for (Map.Entry<String, Flame> entry : map.entrySet()) {
