@@ -1,19 +1,19 @@
 /**
  * FastFlameFractals (FFF)
  * A library for rendering flame fractals asynchronously using Java and OpenCL.
- * 
+ *
  * Copyright (c) 2015 Jeremiah N. Hankins
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -78,10 +78,12 @@ public class DynamicJavaCompiler {
         MyJavaFileManager(JavaFileManager fileManager) {
             super(fileManager);
         }
+        @Override
         public JavaFileObject getJavaFileForInput(Location location, String className, Kind kind) throws IOException {
             if (location == StandardLocation.CLASS_OUTPUT && buffers.containsKey(className) && kind == Kind.CLASS) {
                 final byte[] bytes = buffers.get(className).toByteArray();
                 return new SimpleJavaFileObject(URI.create(className), kind) {
+                    @Override
                     public InputStream openInputStream() {
                         return new ByteArrayInputStream(bytes);
                     }
@@ -89,8 +91,10 @@ public class DynamicJavaCompiler {
             }
             return fileManager.getJavaFileForInput(location, className, kind);
         }
+        @Override
         public JavaFileObject getJavaFileForOutput(Location location, final String className, Kind kind, FileObject sibling) throws IOException {
             return new SimpleJavaFileObject(URI.create(className), kind) {
+                @Override
                 public OutputStream openOutputStream() {
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     buffers.put(className, baos);
@@ -124,6 +128,7 @@ public class DynamicJavaCompiler {
             this.className = className;
             this.classData = classData;
         }
+        @Override
         public Class loadClass(String name) throws ClassNotFoundException {
             if(!className.equals(name))
                 return super.loadClass(name);

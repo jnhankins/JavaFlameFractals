@@ -1,19 +1,19 @@
 /**
  * FastFlameFractals (FFF)
  * A library for rendering flame fractals asynchronously using Java and OpenCL.
- * 
+ *
  * Copyright (c) 2015 Jeremiah N. Hankins
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,8 +25,13 @@
 
 package fff.render;
 
+import fff.flame.Flame;
+import java.awt.image.BufferedImage;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TransferQueue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -59,10 +64,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * renderer query the {@link #isRunning()}, {@link #isShutdown()}, and
  * {@link #isTerminated()} methods.
  * <p>
- * Since work on individual flame images can be very time consuming, 
- * communication between the renderer and the rest of the program is done
- * asynchronously through the callback functions contained within the individual
- * render tasks. If the renderer's {@link #setUpdatesPerSec(double) update rate}
+ Since work on individual flame images can be very time consuming, 
+ communication between the renderer and the rest of the program is done
+ asynchronously through the callback functions contained within the individual
+ renderFlame tasks. If the renderer's {@link #setUpdatesPerSec(double) update rate}
  * is set to a positive value, then the renderer will use the call back function
  * to deliver progress update information (e.g. time elapsed, percent complete,
  * etc..). If the {@link #setUpdateImages(boolean) update-images} flag is
@@ -84,6 +89,10 @@ public abstract class FlameRenderer {
     private static final int SHUTDOWN     = 1;
     private static final int SHUTDOWN_NOW = 2;
     private static final int TERMINATED   = 3;
+    
+    
+    private static final long timeout = 100;
+    private static final TimeUnit timeoutUnit = TimeUnit.MILLISECONDS;
     
     /**
      * Keeps track of the state (e.g. running, shutdown, terminated, etc...).
@@ -107,17 +116,34 @@ public abstract class FlameRenderer {
     private final BlockingQueue<RendererTask> queue = new LinkedBlockingQueue();
     
     /**
+     * Objects used to store update information.
+     */
+    private RendererUpdate updateA = new RendererUpdate();
+    private RendererUpdate updateB = new RendererUpdate();
+    
+    /**
+     * Queue used to synchronously pass updates from the renderer thread to the
+     * update processing thread.
+     */
+    private final TransferQueue<RendererUpdate> updateQueue = new LinkedTransferQueue();
+    
+    /**
      * Task most recently dequeued for rendering.
      */
     private RendererTask task;
     
     /**
-     * Main thread for dequeuing tasks and passing them to the flame renderer.
+     * Thread for dequeuing tasks and rendering flames.
      */
-    private final Thread renderLoop = new Thread(new RenderLoop(), "Flame Engine Render Loop");
+    private final Thread renderThread = new Thread(new RenderLoop(), "Flame Renderer Render Loop");
     
     /**
-     * Update rate. If set to {@code 0} updates will not be generated.
+     * Thread for processing updates.
+     */
+    private final Thread updateThread = new Thread(new UpdateLoop(), "Flame Renderer Update Loop");
+    
+    /**
+     * RendererUpdate rate. If set to {@code 0} updates will not be generated.
      */
     protected double updatesPerSec = 0;
     
@@ -171,7 +197,8 @@ public abstract class FlameRenderer {
         mainLock.lock();
         try {
             if (state == READY) {
-                renderLoop.start();
+                renderThread.start();
+                updateThread.start();
                 state = RUNNING;
             }
         } finally {
@@ -209,12 +236,13 @@ public abstract class FlameRenderer {
     public void shutdownNow() {
         mainLock.lock();
         try {
-            if (state <= RUNNING)  {
+            if (state <= SHUTDOWN)  {
+                // Set the new state flag
+                state = SHUTDOWN_NOW;
                 // Cancel the current task (will not effect the task's state if
-                // the task has alreay been completed or cancle
+                // the task has alreay been completed or cancled)
                 if (task != null)
                     task.cancel(true);
-                state = SHUTDOWN_NOW;
             }
         } finally {
             mainLock.unlock();
@@ -344,7 +372,7 @@ public abstract class FlameRenderer {
      * {@link #setUpdatesPerSec(double) update rate}, the
      * {@link #setMaxBatchTimeSec(double) maximum batch time}, the 
      * {@link RendererSettings#setMaxQuality(double) maximum quality}, and
-     * the {@link RendererSettings#setMaxTime(double) maximum render time},
+     * the {@link RendererSettings#setMaxTime(double) maximum renderFlame time},
      * whichever comes first.
      * <p>When this flag is set, the {@code FlameRenderer} may reduce the number
      * of updates per second by as much as half of what the 
@@ -428,41 +456,79 @@ public abstract class FlameRenderer {
     }
     
     /**
-     * Main render loop thread. This thread takes tasks from the queue and
-     * passes them to the {@link #renderNextFlame(fff.render3.RendererTask) rendernextFlame}
+     * Called asynchronously by a {@link FlameRenderer} to deliver progress
+     * updates and final results while rendering a flame image.
+     * 
+     * @param task the task which generated the flame
+     * @param flame the flame being rendered
+     * @param image the current image of the flame
+     * @param quality the quality of the image
+     * @param points the number of points plotted to renderFlame the image
+     * @param elapsedTime the amount of time in seconds spent rendering the image
+     * @param isFinished {@code true} if the image is finished, {@code false} if work on the image is ongoing
+     */
+    protected void update(
+            RendererTask task, 
+            Flame flame, 
+            BufferedImage image, 
+            double quality, 
+            double points, 
+            double elapsedTime, 
+            boolean isFinished) {
+        // Swap the two update objects
+        RendererUpdate updateT;
+        updateT = updateA;
+        updateA = updateB;
+        updateB = updateT;
+        // Store the data in an update object
+        updateA.renderer = this;
+        updateA.task = task;
+        updateA.flame = flame;
+        updateA.image = image;
+        updateA.quality = quality;
+        updateA.points = points;
+        updateA.elapsedTime = elapsedTime;
+        updateA.isFinished = isFinished;
+        try {
+            // Put the update into the update queue, blocking if necessary
+            updateQueue.transfer(updateA);
+        } catch (InterruptedException ex) {
+            // If interrupted while trying to enqueue the update, propogate the
+            // interupt
+            Thread.currentThread().interrupt();    
+        }
+    }
+    
+    /**
+     * Main render loop thread. This thread dequeues takes from the queue and
+     * passes their flames one at a time to the {@link #renderFlame(RendererTask, Flame)}
      * method. If the queue is empty, the thread will wait for either a task to
-     * be enqueued or for one of the {@code shutdown} method's to be called.
+     * be enqueued or for one of the {@code shutdown()} method's to be called.
      */
     private class RenderLoop implements Runnable {
         @Override
         public void run() {
-            // Used to ensure the render loop thread is terminated as fast as 
-            // possible when the program is shutting down
-            final Thread shutdownHook = new Thread() {
-                @Override
-                public void run() {
-                    shutdownNow();
-                }
-            };
-            Runtime.getRuntime().addShutdownHook(shutdownHook);
-            
             // Initialize the renderer's resources
             initResources();
             
-            while (!(state == SHUTDOWN_NOW || (state == SHUTDOWN && queue.isEmpty()))) {
+            while (state != SHUTDOWN_NOW && !(state == SHUTDOWN && queue.isEmpty())) {
+                mainLock.lock();
                 try {
                     // Block untill a task beccomes avaiable
-                    task = queue.take();
+                    task = queue.poll(timeout, timeoutUnit);
                 } catch (InterruptedException ex) {
                     // If interrupted, loop back arround to check the state
                     continue;
+                } finally {
+                    mainLock.unlock();
                 }
-                // If the task has not been canceled, start working on the task
-                if (task.run()) {
+                // If the poll did not time out and the task has not been 
+                // canceled, start working on the task
+                if (task != null && task.run()) {
                     // While the current task has not been canceled, and the task is
                     // not complete (contains more flames to be rendered)...
                     while (!task.isCancelled() && task.hasNextFlame()) {
-                        // Render the next flame
+                        // Render the flame
                         renderNextFlame(task);
                     }
                     // Signal that the task is done (if it was not canceled)
@@ -473,6 +539,45 @@ public abstract class FlameRenderer {
             // Free the renderer's resources
             freeResources();
             
+            // Set the SHUTDOWN_NOW state so the update thread knows to shutdown
+            // after processing any remaining updates
+            mainLock.lock();
+            try {
+                state = SHUTDOWN_NOW;
+                termination.signalAll();
+            } finally {
+                mainLock.unlock();
+            }
+        }
+    }
+    
+    /**
+     * Update processing loop thread. This thread accepts update objects from
+     * the transfer queue and passes them to the callback function so that the
+     * render thread can concurrently continue working while updates are being
+     * processed (i.e. the callback function is invoked).
+     */
+    private class UpdateLoop implements Runnable {
+        @Override
+        public void run() {
+            RendererUpdate update = null;
+            // Loop until (SHUTDOWN_NOW or TERMINATED) or SHUTDOWN
+            while (state != SHUTDOWN_NOW) {
+                try {
+                    // Block until an update becomes available
+                    update = updateQueue.poll(timeout, timeoutUnit);
+                } catch (InterruptedException ex) {
+                    // If interrupted, loop back arround to check the state
+                }
+                // If the poll did not time out...
+                if (update != null) {
+                    // Get the callback function for the update
+                    RendererCallback callback = update.task.getCallback();
+                    // Invoke the callback function for the update
+                    callback.rendererCallback(update);
+                }
+            }
+            
             // Set the terminated state
             mainLock.lock();
             try {
@@ -480,14 +585,6 @@ public abstract class FlameRenderer {
                 termination.signalAll();
             } finally {
                 mainLock.unlock();
-            }
-            
-            try {
-                // To prevent a memory leek, remove the shutdown hook
-                Runtime.getRuntime().removeShutdownHook(shutdownHook);
-            } catch (Exception ignore) {
-                // If there was an exception, it was because we're already in
-                // the shutdown phase, so just swollow the exception
             }
         }
     }
@@ -509,11 +606,11 @@ public abstract class FlameRenderer {
      * {@link RendererTask#getNextFlame() getNextFlame} method of the given task
      * and block until the flame image is complete or canceled.
      * <p>
-     * Implementations of this method should use the {@code FlameSettings} 
-     * returned by {@link RendererTask#getSettings()} to render the flame image and
-     * use the methods provided by the {@code FlameCallback} returned by 
-     * {@link RendererTask#getCallback()} to asynchronously relay progress updates
-     * and results to the rest of the application.
+     * Implementations of this method should use the {@code FlameSettings}
+     * returned by {@link RendererTask#getSettings()} to render the flame image
+     * and use the methods provided by the {@code FlameCallback} returned by
+     * {@link RendererTask#getCallback()} to asynchronously relay progress
+     * updates and results to the rest of the application.
      * <p>
      * Implementations of this method are not required to call 
      * {@link RendererTask#hasNextFlame()} to ensure that calling

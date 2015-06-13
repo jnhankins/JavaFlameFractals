@@ -1,19 +1,19 @@
 /**
  * FastFlameFractals (FFF)
  * A library for rendering flame fractals asynchronously using Java and OpenCL.
- * 
+ *
  * Copyright (c) 2015 Jeremiah N. Hankins
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,8 +25,6 @@
 
 package fff.render;
 
-import fff.flame.Flame;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -119,12 +117,12 @@ public class BasicCallback implements RendererCallback {
     }
     
     @Override
-    public void rendererCallback(RendererTask task, Flame flame, BufferedImage image, double quality, double points, double elapTime, boolean isFinished) {
+    public void rendererCallback(RendererUpdate update) {
         // Display progress updates
         if (printStream != null)
-            printStream.println(String.format("Drawn %.2fM dots in %.2f sec at %.2fM dots/sec for quality of %.2f.", points/1e7, elapTime, points/(1e7*elapTime), quality));
+            printStream.println(update.toString());
         // If the image is completed...
-        if (isFinished && fileNameRoot != null) {
+        if (update.isFinished() && fileNameRoot != null) {
             try {
                 // Increment the flameCount
                 flameCount++;
@@ -139,13 +137,13 @@ public class BasicCallback implements RendererCallback {
                 if (printStream != null)
                     printStream.println("Writing PNG image file: "+file.getCanonicalPath());
                 // Write the file
-                ImageIO.write(image, "png", file);
+                ImageIO.write(update.getImage(), "png", file);
                 // If there was an error...
             } catch (IOException ex) {
                 // Print the stacktrace
                 ex.printStackTrace(System.err);
                 // Cancle the task
-                task.cancel(true);
+                update.getTask().cancel(true);
             }
         }
     }
