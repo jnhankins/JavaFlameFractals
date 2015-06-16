@@ -83,12 +83,12 @@ public class FlameFactoryDemo {
             // Create the task
             RendererTask task = new RendererTaskSingle(callback, settings, flame);
             // Enqueue the task
-            renderer.getQueue().add(task);
+            renderer.enqueueTask(task);
         }
         // Tell the renderer to shutdown when all tasks are completed
         renderer.shutdown();
         // Wait for the tasks to comple and for the renderer to shutdown
-        renderer.awaitTermination(Long.MAX_VALUE);
+        renderer.awaitTermination();
         // Rendering is complete
         System.out.println("\nDone");
     }

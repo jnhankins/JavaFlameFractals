@@ -40,17 +40,17 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>
  * Rendering {@link RendererTask tasks} consist of an object containing
  * {@link RendererSettings settings}, a
- * {@link RendererCallback callback function}, and a sequence of {@link fff.flame.Flame}
- * instances. Tasks are passed to a {@code FlameRenderer} for rendering by
- * adding them into the renderer's task queue which can be retrieved via
- * {@link #getQueue()}.
+ * {@link RendererCallback callback function}, and a sequence of
+ * {@link fff.flame.Flame} instances. Tasks are passed to a
+ * {@code FlameRenderer} for rendering by adding them into the renderer's task
+ * queue which can be retrieved via {@link #getQueue()}.
  * <p>
- * Work on the first task will not begin until the {@link #start()} method has 
+ * Work on the first task will not begin until the {@link #start()} method has
  * been invoked. Once the renderer has been started, an internal thread will
- * begin a loop which, on each iteration, takes the next task from the front of 
+ * begin a loop which, on each iteration, takes the next task from the front of
  * the queue and begins working on rendering it's images. If there are no tasks
  * in the queue, the internal thread will block until a task becomes available.
- * The task most recently dequeued for rendering can be retrieved via 
+ * The task most recently dequeued for rendering can be retrieved via
  * {@link #getTask()}. Any task can be cancelled at any time by invoking its
  * {@link RendererTask#cancel(boolean) cancel()} method.
  * <p>
@@ -59,13 +59,13 @@ import java.util.concurrent.locks.ReentrantLock;
  * empty, or use {@link #shutdownNow()} to cancel the current task is one is
  * currently underway and to ignore the remaining tasks in the queue so that
  * resources can be freed as quickly as possible. Use
- * {@link #awaitTermination(long)} to cause a thread to block and wait until the
+ * {@link #awaitTermination()} to cause a thread to block and wait until the
  * shutdown procedure has completed. To determine the current status of the
  * renderer query the {@link #isRunning()}, {@link #isShutdown()}, and
  * {@link #isTerminated()} methods.
  * <p>
  * Since work on individual flame images can be very time consuming,
- * communication between the renderer and the rest of the program is done
+ * communication between the renderer and the rest of the program is performed
  * asynchronously through the callback functions contained within the individual
  * renderer tasks. If the renderer's
  * {@link #setUpdatesPerSec(double) update rate} is set to a positive value,
@@ -78,24 +78,52 @@ import java.util.concurrent.locks.ReentrantLock;
  * through the callback function using the same method as the progress updates.
  * <p>
  * {@code FlameRenderer} is designed for use across multiple threads and its
- * methods are synchronized where appropriate. All methods are non-blocking 
+ * methods are synchronized where appropriate. All methods are non-blocking
  * unless explicitly stated otherwise.
- * 
+ *
  * @author Jeremiah N. Hankins
  */
 public abstract class FlameRenderer {
-    private static final int READY        = -1;
-    private static final int RUNNING      = 0;
-    private static final int SHUTDOWN     = 1;
-    private static final int SHUTDOWN_NOW = 2;
-    private static final int TERMINATED   = 3;
-    
-    
-    private static final long timeout = 100;
-    private static final TimeUnit timeoutUnit = TimeUnit.MILLISECONDS;
+    /**
+     * Timeout time used for {@link BlockingQueue#poll(long, TimeUnit)} method
+     * calls. The timed version of the {@code BlockingQueue} remove method is
+     * used so that the render and update threads can periodically check the
+     * renderer's state and react to shutdown requests. A smaller time period
+     * would allow the renderer to shut down more quickly in some circumstances,
+     * but also would wake the threads more frequently without reason when the
+     * state hasn't changed and there are no tasks in the queue.
+     * <p>
+     * Currently set to 100 milliseconds.
+     */
+    private static final long timeoutMilli = 100;
     
     /**
-     * Keeps track of the state (e.g. running, shutdown, terminated, etc...).
+     * A state indicating that the renderer has been initialize but has not
+     * started yet .
+     */
+    private static final int READY        = 0;
+    /**
+     * A state indicating that the renderer is currently running.
+     */
+    private static final int RUNNING      = 1;
+    /**
+     * A state indicating that the renderer has received a leisurely shutdown 
+     * request.
+     */
+    private static final int SHUTDOWN     = 2;
+    /**
+     * A state indicating that the renderer has received an immediate shutdown
+     * request.
+     */
+    private static final int SHUTDOWN_NOW = 3;
+    /**
+     * A state indicating that the renderer has completed its shutdown
+     * procedure.
+     */
+    private static final int TERMINATED   = 4;
+    
+    /**
+     * Keeps track of the renderer's state.
      */
     private volatile int state = READY;
     
@@ -105,8 +133,8 @@ public abstract class FlameRenderer {
     private final ReentrantLock mainLock = new ReentrantLock();
     
     /**
-     * Condition for entering the terminated state used by
-     * {@link #awaitTermination()}.
+     * Condition indicating the transition to the terminated state.
+     * This condition is used used by the awaitTermination methods.
      */
     private final Condition termination = mainLock.newCondition();
     
@@ -135,12 +163,12 @@ public abstract class FlameRenderer {
     /**
      * Thread for dequeuing tasks and rendering flames.
      */
-    private final Thread renderThread = new Thread(new RenderLoop(), "Flame Renderer Render Loop");
+    private Thread renderThread;
     
     /**
      * Thread for processing updates.
      */
-    private final Thread updateThread = new Thread(new UpdateLoop(), "Flame Renderer Update Loop");
+    private Thread updateThread;
     
     /**
      * RendererUpdate rate. If set to {@code 0} updates will not be generated.
@@ -175,6 +203,17 @@ public abstract class FlameRenderer {
     public BlockingQueue<RendererTask> getQueue() {
         return queue;
     }
+    
+    /**
+     * Enqueues the specified task at the end of the queue task queue.
+     * <br>
+     * Equivalent to <pre>{@code getQeueue().add(task)}</pre>
+     * 
+     * @param task the task to enqueue
+     */
+    public void enqueueTask(RendererTask task) {
+        queue.add(task);
+    }
 
     /**
      * Returns the task that was most recently dequeued from the front of the
@@ -190,16 +229,19 @@ public abstract class FlameRenderer {
     
     /**
      * Starts the flame renderer. Flames which are added to the queue will not
-     * be rendered until this method has been called. If this method has already
-     * been invoked, subsequent invocations will have no effect.
+     * be rendered until this method has been called. If this method or one of
+     * the shutdown methods has already been invoked, subsequent invocations of
+     * this method will have no effect.
      */
     public void start() {
         mainLock.lock();
         try {
             if (state == READY) {
-                renderThread.start();
-                updateThread.start();
                 state = RUNNING;
+                updateThread = new Thread(new UpdateLoop(), "FlameRenderer Update Loop");
+                updateThread.start();
+                renderThread = new Thread(new RenderLoop(), "FlameRenderer Render Loop");
+                renderThread.start();
             }
         } finally {
             mainLock.unlock();
@@ -211,8 +253,8 @@ public abstract class FlameRenderer {
      * completed or cancelled. Invocation has no additional effect if already
      * shut down.
      * <p>
-     * This method does not block. If needed, use {@link #awaitTermination(long)} 
-     * to wait until the shutdown has completed.
+     * This method does not wait for the shutdown to complete. If needed, use
+     * {@link #awaitTermination()} to block until the shutdown has completed.
      */
     public void shutdown() {
         mainLock.lock();
@@ -230,8 +272,8 @@ public abstract class FlameRenderer {
      * current task and ignoring remaining tasks the queue. Invocation has no
      * additional effect if already shut down.
      * <p>
-     * This method does not block. If needed, use {@link #awaitTermination(long)} 
-     * to wait until the shutdown has completed.
+     * This method does not wait for the shutdown to complete. If needed, use
+     * {@link #awaitTermination()} to block until the shutdown has completed.
      */
     public void shutdownNow() {
         mainLock.lock();
@@ -248,18 +290,36 @@ public abstract class FlameRenderer {
             mainLock.unlock();
         }
     }
-
+    
     /**
-     * Blocks the current thread until {@link #isTerminated()} returns
-     * {@code true}, or the timeout occurs, or the current thread is
+     * Blocks the thread invoking this method until either
+     * {@link #isTerminated()} returns {@code true} or the invoking thread is
      * interrupted, whichever happens first.
      *
-     * @param nanos the maximum time to wait in nanoseconds
-     * @return {@code false} if the timeout elapsed before termination
-     * 
-     * @throws java.lang.InterruptedException if interrupted while waiting
+     * @throws InterruptedException if the invoking thread was interrupted while waiting
      */
-    public boolean awaitTermination(long nanos) throws InterruptedException {
+    public void awaitTermination() throws InterruptedException {
+        mainLock.lock();
+        try {
+            while (!isTerminated())
+                termination.await();
+        } finally {
+            mainLock.unlock();
+        }
+    }
+    
+    /**
+     * Blocks the thread invoking this method until either
+     * {@link #isTerminated()} returns {@code true}, the timeout occurs, or the
+     * invoking thread is interrupted, whichever happens first.
+     * 
+     * @param timeout the maximum time to wait
+     * @param unit the time unit of the timeout argument
+     * @return {@code true} if this renderer terminated and {@code false} if the timeout elapsed before termination
+     * @throws InterruptedException if the invoking thread is interrupted while waiting
+     */
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+        long nanos = unit.toNanos(timeout);
         mainLock.lock();
         try {
             while (!isTerminated()) {
@@ -363,9 +423,9 @@ public abstract class FlameRenderer {
      * batch size so that the fewest batches are needed to complete the final
      * image. The purpose of this flag is to reduce the amount of overhead time
      * spent checking whether or not the current quality and elapsed time have
-     * exceeded the maximum quality or time. This is done by predicting how 
-     * many more iterations will be necessary before either the quality or 
-     * time limit are reached and then performing those iterations without 
+     * exceeded the maximum quality or time. This is accomplished by predicting
+     * how many more iterations will be necessary before either the quality or
+     * time limit are reached and then performing those iterations without
      * checks or updates.
      * <p>
      * The maximum time that can pass between checks is limited by the
@@ -401,16 +461,16 @@ public abstract class FlameRenderer {
      * when using the batch-accelerated algorithm. If set to {@code 0}, there
      * will be no limit to the time spent working on a single batch.
      * <p>
-     * <b>Warning:</b>The purpose of this flag is to get the program to spend
-     * a majority of its time inside of an OpenCL kernel. This means that the
-     * kernel can run for relatively long periods of time (potentially several 
+     * <b>Warning:</b>The purpose of this flag is to get the program to spend a
+     * majority of its time inside of an OpenCL kernel. This means that the
+     * kernel can run for relatively long periods of time (potentially several
      * seconds). If this flag is used and the program is executed on a GPU, the
      * video driver may temporarily stop responding to the operating system
      * causing the OS to cancel the operation by resetting the driver. Use a
      * lower batch time or see
      * <a href="http://stackoverflow.com/a/25116354">http://stackoverflow.com/a/25116354</a>
      * for potential ways to fix this problem though OS and driver settings.
-     * 
+     *
      * @param maxBatchTimeSec the maximum time to spend on a single batch
      * @see #setBatchAccerlated(boolean) 
      */
@@ -475,6 +535,10 @@ public abstract class FlameRenderer {
             double points, 
             double elapsedTime, 
             boolean isFinished) {
+        // If for some crazy reason the update thread isn't alive, we would get
+        // blocked trying to transfer the update, so don't even try.
+        if (!updateThread.isAlive())
+            return;
         // Swap the two update objects
         RendererUpdate updateT;
         updateT = updateA;
@@ -512,27 +576,24 @@ public abstract class FlameRenderer {
             initResources();
             
             while (state != SHUTDOWN_NOW && !(state == SHUTDOWN && queue.isEmpty())) {
-                mainLock.lock();
                 try {
                     // Block untill a task beccomes avaiable
-                    task = queue.poll(timeout, timeoutUnit);
+                    task = queue.poll(timeoutMilli, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException ex) {
                     // If interrupted, loop back arround to check the state
                     continue;
-                } finally {
-                    mainLock.unlock();
                 }
                 // If the poll did not time out and the task has not been 
                 // canceled, start working on the task
-                if (task != null && task.run()) {
+                if (task != null && task.setRunningState()) {
                     // While the current task has not been canceled, and the task is
                     // not complete (contains more flames to be rendered)...
                     while (!task.isCancelled() && task.hasNextFlame()) {
                         // Render the flame
                         renderNextFlame(task);
                     }
-                    // Signal that the task is done (if it was not canceled)
-                    task.done();
+                    // Signal that the task is completed (if it was not canceled)
+                    task.setCompletedState();
                 }
             }
             
@@ -544,7 +605,6 @@ public abstract class FlameRenderer {
             mainLock.lock();
             try {
                 state = SHUTDOWN_NOW;
-                termination.signalAll();
             } finally {
                 mainLock.unlock();
             }
@@ -565,12 +625,13 @@ public abstract class FlameRenderer {
             while (state != SHUTDOWN_NOW) {
                 try {
                     // Block until an update becomes available
-                    update = updateQueue.poll(timeout, timeoutUnit);
+                    update = updateQueue.poll(timeoutMilli, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException ex) {
                     // If interrupted, loop back arround to check the state
                 }
-                // If the poll did not time out...
-                if (update != null) {
+                // If the poll did not time out and the task has not been 
+                // canceled...
+                if (update != null && !update.getTask().isCancelled()) {
                     // Get the callback function for the update
                     RendererCallback callback = update.task.getCallback();
                     // Invoke the callback function for the update
@@ -602,7 +663,7 @@ public abstract class FlameRenderer {
     protected abstract void freeResources();
     
     /**
-     * Renders the next flame returned by the given the 
+     * Renders the next flame returned by the given the
      * {@link RendererTask#getNextFlame() getNextFlame} method of the given task
      * and block until the flame image is complete or canceled.
      * <p>

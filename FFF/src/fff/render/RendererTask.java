@@ -26,6 +26,7 @@
 package fff.render;
 
 import fff.flame.Flame;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 /**
@@ -34,19 +35,39 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * retrieved via {@link #getNextFlame()}, {@link #getSettings()}, and
  * {@link #getCallback()} respectively.
  * <p>
- * If a task as not already been completed, then it can be canceled using 
- * {@link #cancel(boolean)}, and the status of a task can be queried using the 
- * {@link #isCancelled()} and {@link #isDone()}. A thread can be blocked until
- * the task has been completed or cancelled using the {@link #block()} methods.
- * 
+ * If a task as not already been completed, then it can be canceled using
+ * {@link #cancel(boolean)}, and the status of a task can be queried using the
+ * {@link #isCancelled()} and {@link #isTerminated()}. A thread can be blocked
+ * until the task has been completed or cancelled using the
+ * {@link #awaitTermination()} methods.
+ *
  * @author Jeremiah N. Hankins
  */
 public abstract class RendererTask {
+    /**
+     * A nested inner class that implements atomic state transitions.
+     */
     private final Sync sync = new Sync();
     
+    /**
+     * The callback function that should be used by the {@code FlameRenderer}
+     * that works on this task.
+     */
     private final RendererCallback callback;
+    
+    /**
+     * The renderer settings that should be used by the {@code FlameRenderer}
+     * that works on this task.
+     */
     private final RendererSettings settings;
     
+    /**
+     * Initializes a {@code RendererTask} using the specified renderer callback
+     * function and settings.
+     * 
+     * @param callback the renderer callback function
+     * @param settings the renderer settings
+     */
     public RendererTask( 
             RendererCallback callback,
             RendererSettings settings) {
@@ -104,26 +125,33 @@ public abstract class RendererTask {
     public boolean isCancelled() {
         return sync.innerIsCancelled();
     }
+    
+    /**
+     * Returns {@code true} if the task has been completed.
+     * 
+     * @return {@code true} if the task has been completed
+     */
+    public boolean isCompleted() {
+        return sync.innerIsCompleted();
+    }
 
     /**
-     * Returns {@code true} if the task has been cancelled or completed 
-     * successfully.
+     * Returns {@code true} if the task has been completed or cancelled
      * 
-     * @return {@code true} if the task has been cancelled or completed 
-     * successfully
+     * @return {@code true} if the task has been completed or cancelled
      */
-    public boolean isDone() {
-        return sync.innerIsDone();
+    public boolean isTerminated() {
+        return sync.innerIsTerminated();
     }
 
     /**
      * Attempts to cancel the task. This attempt will fail if the task has
-     * already completed or has already been cancelled. If the task has already
-     * started, then the {@code mayCancleIfStarted} parameter determines
-     * whether the {@link FlameRenderer} working on this task should attempt
-     * to stop the task. If the task is successfully cancelled, then threads
-     * blocked by this task's block methods will become unblocked and resume.
-     * 
+     * already been completed or cancelled. If the task has already started,
+     * then the {@code mayCancleIfStarted} parameter determines whether the
+     * {@link FlameRenderer} working on this task should attempt to stop the
+     * task. If the task is successfully cancelled, then threads blocked by this
+     * task's awaitTermination methods will become unblocked and resume.
+     *
      * @param mayCancleIfStarted if {@code false} and work on the task has
      * already started, then the task will be completed
      * @return {@code false} if the task could not be cancelled
@@ -133,25 +161,28 @@ public abstract class RendererTask {
     }
 
     /**
-     * Blocks the thread invoking this method until the task 
-     * {@link #isDone() is done}.
-     * 
+     * Blocks the thread invoking this method until either
+     * {@link #isTerminated()} returns {@code true} or the invoking thread is
+     * interrupted, whichever happens first.
+     *
      * @throws InterruptedException if the invoking thread was interrupted while waiting
      */
-    public void block() throws InterruptedException {
-        sync.innerBlock();
+    public void awaitTermination() throws InterruptedException {
+        sync.innerAwaitTermination();
     }
 
     /**
-     * Blocks the thread invoking this method until the task 
-     * {@link #isDone() is done} or given amount of time in nanoseconds has 
-     * elapsed.
+     * Blocks the thread invoking this method until either
+     * {@link #isTerminated()} returns {@code true}, the timeout occurs, or the
+     * invoking thread is interrupted, whichever happens first.
      * 
-     * @param nanosTimeout the maximum amount of time in nanoseconds to wait
-     * @throws InterruptedException if the invoking thread was interrupted while waiting
+     * @param timeout the maximum time to wait
+     * @param unit the time unit of the timeout argument
+     * @return {@code true} if this task terminated and {@code false} if the timeout elapsed before termination
+     * @throws InterruptedException if the invoking thread is interrupted while waiting
      */
-    public void block(long nanosTimeout) throws InterruptedException {
-        sync.innerBlock(nanosTimeout);
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+        return sync.innerAwaitTermination(timeout, unit);
     }
     
     /**
@@ -161,68 +192,117 @@ public abstract class RendererTask {
      *
      * @return {@code true} if the task was in the ready state when this method was invoked
      */
-    protected boolean run() {
-        return sync.innerRun();
+    protected boolean setRunningState() {
+        return sync.innerSetRunningState();
     }
 
     /**
      * Invoked by the {@link FlameRenderer} if and when the task is completed
      * successfully. Invocation of this method causes threads blocked by this
-     * task's block methods to become unblocked and resume. This method will
-     * fail and return {@code false} if the task has not been started yet or has
-     * already been cancelled.
+     * task's awaitTermination methods to become unblocked and resume. This
+     * method will fail and return {@code false} if the task has not been
+     * started yet or has already been cancelled.
      *
      * @return {@code true} if the task was in the running state when this method was invoked
      */
-    protected boolean done() {
-        return sync.innerDone();
+    protected boolean setCompletedState() {
+        return sync.innerSetCompletedState();
     }
     
+    /**
+     * {@code Sync} extends {@link AbstractQueuedSynchronizer} and implements
+     * {@code RendererTask} state transitions atomically.
+     */
     private final class Sync extends AbstractQueuedSynchronizer {
+        /**
+         * A state indicating that the task has not started yet.
+         */
         public static final int READY     = 0;
+        /**
+         * A state indicating that the task is underway.
+         */
         public static final int RUNNING   = 1;
+        /**
+         * A state indicating that the task has been completed.
+         */
         public static final int COMPLETED = 2;
-        public static final int CANCELLED = 4;
+        /**
+         * A state indicating that the task has been cancelled.
+         */
+        public static final int CANCELLED = 3;
         
+        /**
+         * Implementation of {@link #isCancelled()}.
+         * 
+         * @return {@code true} if the task is cancelled
+         */
         boolean innerIsCancelled() {
-            // Return true if the task is cancelled
             return getState() == CANCELLED;
         }
         
-        boolean innerIsDone() {
-            // Return true if the task is completed or cancelled
+        /**
+         * Implementation of {@link #isCompleted()}.
+         * 
+         * @return {@code true} if the task is completed
+         */
+        boolean innerIsCompleted() {
+            return getState() == COMPLETED;
+        }
+        
+        /**
+         * Implementation of {@link #isTerminated()}.
+         * 
+         * @return {@code true} if the task is completed or cancelled
+         */
+        boolean innerIsTerminated() {
             return (getState() & (COMPLETED | CANCELLED)) != 0;
         }
         
-        boolean innerRun() {
+        /**
+         * Implementation of {@link #setRunningState()}.
+         * 
+         * @return {@code true} if the previous state was {@code READY}
+         */
+        boolean innerSetRunningState() {
             // Only transiton into the running state if the task is currently
             // in the ready state.
             return compareAndSetState(READY, RUNNING);
         }
         
-        boolean innerDone() {
-            // Only transition into the done state if the task is currently
+        /**
+         * Implementation of {@link #setCompletedState()}.
+         * 
+         * @return {@code true} if the pervious state was {@code RUNNING}
+         */
+        boolean innerSetCompletedState() {
+            // Only transition into the completed state if the task is currently
             // in the running state (i.e. not cancelled).
             if (!compareAndSetState(RUNNING, COMPLETED))
                 return false;
-            // Unblock any threads blocked in the get methods
+            // Unblock any threads blocked in the awaitTermination() methods
             releaseShared(0);
             // Return true
             return true;
         }
         
+        /**
+         * Implementation of {@link #cancel(boolean)}.
+         * 
+         * @param mayCancleIfStarted if {@code true}, the state may transition from {@code RUNNING} to {@code CANCELLED}, otherwise it cannot
+         * @return {@code true} if the state successfully transitions to {@code CANCELLED}
+         */
         boolean innerCancel(boolean mayCancleIfStarted) {
-            // We need to atomically set the task state to CANCLED if and 
-            // only if the task is not already done or cancled and, if the
-            // mayCancleIfStarted flag is set not running.
+            // We need to atomically set the task state to CANCLED if and only 
+            // if (1) the task is not already completed or cancled and (2) if 
+            // the task is running the mayCancleIfStarted flag is set.
             // However, AbstractQueuedSynchronizer does not provide atomic 
-            // methods this complex, so we'll use a short spin loop. We aquire
-            // the state at the beginning of the loop, check the conditions that
-            // would cause the cancelation to fail, and only set the canclled
-            // state if the state has not changed since we preforemed the
-            // checks. If the state has changed, then the new state may fail
-            // the checks. The state transitions and checks prevent this loop 
-            // from iterating more than twice.
+            // methods this complex, but we can get it done with a short spin 
+            // loop: We aquire the state at the beginning of the loop, check the
+            // conditions that would cause the cancelation to fail, and only set
+            // the cancelled state if the state has not changed since we started
+            // the loop and preforemed the checks. If the state has changed, 
+            // then the new state may fail the checks. The state transitions and
+            // checks prevent this loop from iterating more than twice.
             for (;;) {
                 int s = getState();
                 // If the mayCancleIfStarted flat is set, and the task was 
@@ -238,25 +318,37 @@ public abstract class RendererTask {
                 if (compareAndSetState(s, CANCELLED))
                     break;
             }
-            // Unblock any threads blocked in the get methods
+            // Unblock any threads blocked in the awaitTermination() methods
             releaseShared(0);
             // Return true
             return true;
         }
         
-        void innerBlock() throws InterruptedException {
-            // Block until innerIsDone return true (via tryAcquireShared)
+        /**
+         * Implementation of {@link #awaitTermination()}.
+         * 
+         * @throws InterruptedException if the invoking thread is interrupted
+         */
+        void innerAwaitTermination() throws InterruptedException {
+            // Block until innerIsTerminated returns true (via tryAcquireShared)
             acquireSharedInterruptibly(0);
         }
         
-        void innerBlock(long nanosTimeout) throws InterruptedException {
-            // Block until innerIsDone return true (via tryAcquireShared)
-            tryAcquireSharedNanos(0, nanosTimeout);
+        /**
+         * Implementation of {@link #awaitTermination(long)}.
+         * 
+         * @return {@code} true if terminated and {@code false} if timed out
+         * @throws InterruptedException if the invoking thread is interrupted
+         */
+        boolean innerAwaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+            // Block until innerIsTerminated returns true (via tryAcquireShared)
+            long nanos = unit.toNanos(timeout);
+            return tryAcquireSharedNanos(0, nanos);
         }
         
         @Override
         protected int tryAcquireShared(int ignore) {
-            return innerIsDone() ? 1 : -1;
+            return innerIsTerminated() ? 1 : -1;
         }
         
         @Override

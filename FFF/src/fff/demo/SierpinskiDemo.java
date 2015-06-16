@@ -81,13 +81,13 @@ public class SierpinskiDemo {
 
             // Pass the rendering task to the flame renderer renderer
             // Work will begin immediatly
-            renderer.getQueue().add(task);
+            renderer.enqueueTask(task);
             
             // Tell the renderer to shutdown when the task is complete
             renderer.shutdown();
             
             // Wait for the task to comple and for the renderer to shutdown
-            renderer.awaitTermination(Long.MAX_VALUE);
+            renderer.awaitTermination();
             
             // Rendering is complete
             System.out.println("\nDone");

@@ -42,7 +42,7 @@ public class HelloWorldDemo {
         // Create the renderer
         FlameRenderer renderer = new FlameRendererOpenCL(FlameRendererOpenCL.DeviceType.ALL);
         // Add a new flame rendering task to the queue
-        renderer.getQueue().add(
+        renderer.enqueueTask(
             new RendererTaskSingle( // That renders a single flame
                 new BasicCallback("HelloWorldDemo"), // Using the basic callback function
                 new RendererSettings(),              // Using default image settings
