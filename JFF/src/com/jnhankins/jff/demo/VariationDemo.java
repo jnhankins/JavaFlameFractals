@@ -50,6 +50,7 @@ import javax.tools.JavaFileObject;
 public class VariationDemo {
     
     public static void main(String[] args) {
+        
         // Create the new variation definition
         VariationDefinition sincVariation = null;
         try {
@@ -92,7 +93,9 @@ public class VariationDemo {
             
             // Create an OpenCL flame renderer
             FlameRenderer renderer = new FlameRendererOpenCL(FlameRendererOpenCL.DeviceType.ALL);
+            // Set the update rate to 25 updates per second
             renderer.setUpdatesPerSec(25);
+            // Start the renderer
             renderer.start();
             
             // Display the renderer's settings
@@ -100,8 +103,9 @@ public class VariationDemo {
 
             // Create the image settings
             RendererSettings settings = new RendererSettings();
-            settings.setWidth(1920);
-            settings.setHeight(1080);
+            // Set the image size to 1920x1080
+            settings.setWidth(1920).setHeight(1080);
+            // Set the image "quality" to 200
             settings.setMaxQuality(200);
             
             // Display the image's settings
@@ -136,5 +140,4 @@ public class VariationDemo {
             System.exit(0);
         }
     }
-    
 }
