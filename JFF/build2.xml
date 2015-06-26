@@ -1,0 +1,43 @@
+<project name="JFF" default="dist" basedir=".">
+  <description>Build file for JFF</description>
+  <property name="src" location="src"/>
+  <property name="lib" location="lib"/>
+  <property name="build" location="build"/>
+  <property name="dist" location="dist"/>
+  
+  <path id="class.path">
+    <fileset dir="${lib}">
+      <include name="*.jar"/>
+    </fileset>
+    <pathelement path="${build}"/>
+  </path>
+  
+  <target name="init">
+    <tstamp/>
+    <mkdir dir="${build}"/>
+  </target>
+  
+  <target name="compile" depends="init" description="compile the source">
+    <javac srcdir="${src}" destdir="${build}" includeantruntime="false">
+      <classpath refid="class.path"/>
+      <include name="*/**"/>
+    </javac>
+    <copy todir="${build}">
+      <fileset dir="${src}">
+        <exclude name="**/*.java"/>
+      </fileset>
+    </copy>
+  </target>
+    
+  <target name="dist" depends="compile" description="generate the distribution">
+    <mkdir dir="${dist}"/>
+    <jar jarfile="${dist}/${ant.project.name}.jar" basedir="${build}">
+      <zipgroupfileset dir="${lib}" includes="*.jar"/>
+    </jar>
+  </target>
+  
+  <target name="clean" description="clean up">
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+</project>
