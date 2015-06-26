@@ -534,7 +534,7 @@ public class VariationDefinition implements Comparable<VariationDefinition>, Ser
 //            + "double r = 2.0/(RADIUS+1.0);\n"
 //            + "X = x*r;\n"
 //            + "Y = y*r;\n", null);
-//        map.put("Eyeﬁsh", definition);
+//        map.put("Eyefish", definition);
 //        
 //        definition = new VariationDefinition("Bubble", ""
 //            + "double r = RADIUS;\n"
