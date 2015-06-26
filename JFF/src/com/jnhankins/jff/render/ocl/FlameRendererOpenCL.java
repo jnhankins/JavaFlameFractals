@@ -36,13 +36,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
+import java.nio.file.*;
+import java.util.*;
 import org.jocl.*;
 import static org.jocl.CL.*;
 
@@ -55,7 +53,8 @@ public class FlameRendererOpenCL extends FlameRenderer {
     private static final String oclVariationCodeTemplatePath = "OCLVariationTemplate.cl";
     private static final String oclProgramCodeTemplatePath = "OCLProgramTemplate.cl";
     private static String oclVariationCodeTemplate;
-    private static String oclProgramCodeTemplate;
+    private static String oclProgramCodeTemplate;    
+    private static FileSystem fileSystem;
     
     // OpenCL Platform and Device Info
     private final int platformIndex;
@@ -129,11 +128,12 @@ public class FlameRendererOpenCL extends FlameRenderer {
     private RendererTask task;
     private Flame flame;
     private RendererSettings settings;
-    
+
     static {
         // Enable exceptions
         setExceptionsEnabled(true);
     }
+    
     
     /**
      * Constructs a new {@code FlameRendererOpenCL} that attempts to aquire
@@ -336,38 +336,48 @@ public class FlameRendererOpenCL extends FlameRenderer {
         hitcountsMem = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 2*Sizeof.cl_int, null, null);
     }
     
-    private void loadCodeTempaltes() {
-        // Load the OpenCL source code templates
+    private String loadCodeTemplate(String templatePath) {
         try {
-            URL url;
-            String temp;
-            
-            // Load the variation tempalte code
-            if (oclVariationCodeTemplate == null) {
-                url = getClass().getResource(oclVariationCodeTemplatePath);
-                if (url == null)
-                    throw new FileNotFoundException("Could not find file: "+oclVariationCodeTemplatePath);
-                temp = new String(Files.readAllBytes(Paths.get(url.toURI())));
-                temp = temp.replaceAll("\r\n","\n");       // Remove redundent carriage returns
-                temp = temp.replaceAll("\r","\n");         // Convert the remaining carriage returns to newlines
-                temp = temp.substring(temp.indexOf("//")); // Remove header
-                oclVariationCodeTemplate = temp;
+            // Get the resource URL
+            URL url = getClass().getResource(templatePath);
+            if (url == null)
+                throw new FileNotFoundException("Could not find file: "+templatePath);
+            // Do some nonsense to be able to read from within the JAR
+            String[] array = url.toURI().toString().split("!");
+            if (fileSystem == null) {
+                URI uri = URI.create(array[0]);
+                try {
+                    fileSystem = FileSystems.getFileSystem(uri);
+                } catch (FileSystemNotFoundException ex) {
+                    Map<String, String> env = new HashMap();
+                    env.put("create","true");
+                    fileSystem = FileSystems.newFileSystem(uri, env);
+                }
             }
-            
-            // Load the kenel template code
-            if (oclProgramCodeTemplate ==  null) {
-                url = getClass().getResource(oclProgramCodeTemplatePath);
-                if (url == null)
-                    throw new FileNotFoundException("Could not find file: "+oclVariationCodeTemplatePath);
-                temp = new String(Files.readAllBytes(Paths.get(url.toURI())));
-                temp = temp.replaceAll("\r\n","\n");  // Remove redundent carriage returns
-                temp = temp.replaceAll("\r","\n");    // Convert the remaining carriage returns to newlines
-                oclProgramCodeTemplate = temp;
-            }
+            // Return the entire file as a String
+            return new String(Files.readAllBytes(fileSystem.getPath(array[1])));
         } catch (URISyntaxException | IOException ex) {
             // Should never happen unless the user deletes or renames the 
             // OpenCL template files.
             throw new RuntimeException(ex);
+        }
+    }
+    
+    private void loadCodeTempaltes() {
+        // Load the variation tempalte code
+        if (oclVariationCodeTemplate == null) {
+            String temp = loadCodeTemplate(oclVariationCodeTemplatePath);
+            temp = temp.replaceAll("\r\n","\n");       // Remove redundent carriage returns
+            temp = temp.replaceAll("\r","\n");         // Convert the remaining carriage returns to newlines
+            temp = temp.substring(temp.indexOf("//")); // Remove header
+            oclVariationCodeTemplate = temp;
+        }
+        // Load the kenel template code
+        if (oclProgramCodeTemplate ==  null) {
+            String temp = loadCodeTemplate(oclProgramCodeTemplatePath);
+            temp = temp.replaceAll("\r\n","\n");  // Remove redundent carriage returns
+            temp = temp.replaceAll("\r","\n");    // Convert the remaining carriage returns to newlines
+            oclProgramCodeTemplate = temp;
         }
     }
 
