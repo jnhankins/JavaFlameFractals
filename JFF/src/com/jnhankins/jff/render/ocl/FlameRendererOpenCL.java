@@ -53,7 +53,7 @@ public class FlameRendererOpenCL extends FlameRenderer {
     private static final String oclVariationCodeTemplatePath = "OCLVariationTemplate.cl";
     private static final String oclProgramCodeTemplatePath = "OCLProgramTemplate.cl";
     private static String oclVariationCodeTemplate;
-    private static String oclProgramCodeTemplate;    
+    private static String oclProgramCodeTemplate;
     private static FileSystem fileSystem;
     
     // OpenCL Platform and Device Info

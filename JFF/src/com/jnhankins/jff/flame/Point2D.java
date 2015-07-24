@@ -23,7 +23,7 @@
  * SOFTWARE.
  */
 
-package com.jnhankins.jff.util;
+package com.jnhankins.jff.flame;
 
 /**
  * Point2D is a simple container class pairing an x and y coordinate.

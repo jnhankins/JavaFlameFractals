@@ -26,7 +26,6 @@
 package com.jnhankins.jff.flame;
 
 import com.jnhankins.jff.util.DynamicJavaCompiler;
-import com.jnhankins.jff.util.Point2D;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -174,30 +173,28 @@ public class VariationDefinition implements Comparable<VariationDefinition>, Ser
         // Format the variation's source code
         variationCode = variationCode.replaceAll("\n","\n        ").trim(); 
         // Put the code into the template
-        String variationTemplate = ""+
-            "package com.jnhankins.jff.flame;\n" +
-            "\n" +
-            "import com.jnhankins.jff.flame.VariationDefinition.*;\n" +
-            "import com.jnhankins.jff.util.Point2D;\n" +
-            "import java.util.Random;\n" +
-            "import static java.lang.Math.*;\n" +
-            "\n" +
-            "public class VariationImpl implements VariationFunction {\n" +
-            "    Random RAND = new Random();\n" +
-            "    \n" +
-            "    public void apply(Point2D RESULT, double COEF, double[] PARAMETERS, double[] AFFINE) {\n" +
-            "        final double x = RESULT.x;\n" +
-            "        final double y = RESULT.y;\n" +
-            "        double X, Y;\n" +
-            "        ___VARIATION_CODE___\n"+
-            "        RESULT.x = X;\n" +
-            "        RESULT.y = Y;\n" +
-            "    }\n" +
-            "    \n" +
-            "    double fmod(double a, double b) { return a-b*floor(a/b); };\n" +
-            "    double trunc(double a) { return Math.floor(a)+(a>0?0:1); };\n" +
-            "    double fabs(double a) { return Math.abs(a); };\n" +
-            "}";
+        String variationTemplate = 
+                  "package com.jnhankins.jff.flame;\n"
+                + "\n"
+                + "import java.util.Random;\n"
+                + "import static java.lang.Math.*;\n"
+                + "\n"
+                + "public class VariationImpl implements VariationFunction {\n"
+                + "    Random RAND = new Random();\n"
+                + "    \n"
+                + "    public void apply(Point2D RESULT, double COEF, double[] PARAMETERS, double[] AFFINE) {\n"
+                + "        final double x = RESULT.x;\n"
+                + "        final double y = RESULT.y;\n"
+                + "        double X, Y;\n"
+                + "        ___VARIATION_CODE___\n"
+                + "        RESULT.x = X;\n"
+                + "        RESULT.y = Y;\n"
+                + "    }\n"
+                + "    \n"
+                + "    double fmod(double a, double b) { return a - b*floor(a/b); };\n"
+                + "    double trunc(double a) { return Math.floor(a) + (a<0?1:0); }\n"
+                + "    double fabs(double a)  { return Math.abs(a); };\n"
+                + "}\n";
         variationCode = variationTemplate.replace("___VARIATION_CODE___", variationCode);
         // Compile the function
         return DynamicJavaCompiler.compile(VariationFunction.class, "com.jnhankins.jff.flame.VariationImpl", variationCode, dl);

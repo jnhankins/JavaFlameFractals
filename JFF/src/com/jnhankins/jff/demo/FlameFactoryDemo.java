@@ -64,7 +64,7 @@ public class FlameFactoryDemo {
         map.put("LevyDragon",              newLevyDragon());
         map.put("PythagoreanTree",         newPythagoreanTree(Math.toRadians(60)));
         map.put("BarnsleyFern",            newBarnsleyFern());
-        // Create the renderer
+        // Create the renderer0
         FlameRenderer renderer = new FlameRendererOpenCL(DeviceType.ALL);
         // Set the update rate to 10 updates per second
         renderer.setUpdatesPerSec(10);

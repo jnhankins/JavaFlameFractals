@@ -25,8 +25,6 @@
 
 package com.jnhankins.jff.flame;
 
-import com.jnhankins.jff.util.Point2D;
-
 /**
  * Class {@code TransformAffine} provides methods to access and modify the 
  * {@link Transform#getPreAffine() pre-affine} and

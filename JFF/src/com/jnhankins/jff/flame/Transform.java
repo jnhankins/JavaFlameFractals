@@ -25,7 +25,6 @@
 
 package com.jnhankins.jff.flame;
 
-import com.jnhankins.jff.util.Point2D;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;

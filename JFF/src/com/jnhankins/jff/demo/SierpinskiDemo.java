@@ -59,15 +59,16 @@ public class SierpinskiDemo {
 
             // Create the image settings
             RendererSettings settings = new RendererSettings();
-            settings.setWidth(1920);
-            settings.setHeight(1080);
-            settings.setMaxQuality(200);
+            settings.setWidth(16);
+            settings.setHeight(16);
+            settings.setMaxQuality(20000);
             
             // Display the image's settings
             System.out.println(settings+"\n");
 
             // Create the flame
             Flame flame = FlameFactory.newSierpinskiTriangle();
+            flame.getBackground().set(0, 0, 0, 0);
             
             // Display the flame's "genome"
             System.out.println(flame+"\n");
